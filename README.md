@@ -81,6 +81,6 @@ ISC
 
 ---
 
-**Built with ⚡ by [@erebus-sh](https://github.com/erebus-sh)**
+**Built with <3 by [@v0id-user](https://github.com/v0id-user)**
 
 Stay focused on building. Nyron handles the order.
