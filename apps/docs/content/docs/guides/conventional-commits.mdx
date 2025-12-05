@@ -130,6 +130,19 @@ If a commit doesn't follow the conventional format, Nyron will:
 
 For best results, ensure all commits follow the conventional format.
 
+## How Commits Are Selected for Releases
+
+Nyron determines which commits to include in a release based on `nyron-release@*` tags:
+
+- **Commits between tags** (when using `-n` flag): Includes all commits between the previous `nyron-release@*` tag and the latest one
+- **Commits since last tag** (default): Includes all commits from the latest `nyron-release@*` tag to HEAD
+
+Only commits that fall within these boundaries are parsed and included in the changelog. Your existing version tags (like `v1.0.0`) don't affect which commits are included - only `nyron-release@*` tags matter for release boundaries.
+
+<Callout type="info">
+**Commit selection**: When you run `nyron release`, it fetches commits using GitHub's API between the relevant `nyron-release@*` tags. This means only commits that are part of the release boundary are analyzed, regardless of how many other tags or commits exist in your repository.
+</Callout>
+
 ## GitHub Repository Setup
 
 To maintain a clean, linear, and machine-readable git history compatible with changelog automation, your GitHub repository should follow the setup below.

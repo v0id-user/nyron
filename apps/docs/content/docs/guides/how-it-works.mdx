@@ -13,11 +13,18 @@ Nyron follows a systematic approach to generate your changelogs:
 
 ### 1. Fetches commits
 
-Nyron retrieves all commits since your last tagged release for the specified project.
+Nyron retrieves commits based on `nyron-release@*` tags, which serve as release boundaries:
+
+- **With `-n` flag**: Fetches commits **between** the previous `nyron-release@*` tag and the latest one
+- **Without `-n` flag**: Fetches commits from the latest `nyron-release@*` tag to HEAD
+
+<Callout type="info">
+**Important**: Nyron **only** uses `nyron-release@*` tags to determine release boundaries. Your project version tags (like `v1.0.0`, `@pkg/name@1.0.0`) are not used for this purpose. If you have an existing repository with many commits and tags, Nyron will only look at commits since the last `nyron-release@*` tag (or from the beginning if none exists).
+</Callout>
 
 ### 2. Filters out meta commits
 
-Version bumps, changelog updates, and other meta commits are automatically excluded from the changelog.
+Version bumps, changelog updates, and other meta commits are automatically excluded from the changelog. This ensures your changelog focuses on meaningful changes rather than version management overhead.
 
 ### 3. Parses conventional commit syntax
 
@@ -55,6 +62,32 @@ Here's what a generated changelog section looks like:
 ## Bug Fixes
 - **api**: resolve memory leak in endpoint ([@username](https://github.com/username)) [[e4f5g6h](https://github.com/owner/repo/commit/e4f5g6h)]
 ```
+
+## Understanding Release Boundaries
+
+Nyron uses a dual-tag system:
+
+### Project Tags (Version Tracking)
+- Created by `nyron bump` command
+- Format: Based on your `tagPrefix` config (e.g., `v1.2.0`, `@pkg/name@1.2.0`)
+- Purpose: Track package versions in your repository
+- **Not used** as release boundaries
+
+### Nyron-Release Tags (Release Boundaries)
+- Created by `nyron push-tag` or `nyron release` command
+- Format: `nyron-release@2024-01-15@14-30-25.123`
+- Purpose: Mark release boundaries for GitHub releases
+- **Only these tags** determine which commits are included in releases
+
+When you run `nyron release`:
+1. It finds the latest `nyron-release@*` tag
+2. Fetches commits since that tag (or between tags with `-n`)
+3. Parses those commits to generate the changelog
+4. Creates a GitHub release
+
+<Callout type="warn">
+**For existing repositories**: If you're starting with Nyron on a repo that already has many commits and tags, create an initial `nyron-release@*` tag at your desired starting point. Future releases will only include commits after that tag. Without an initial tag, Nyron will include all commits from the beginning of your repository.
+</Callout>
 
 ## What Makes It Work
 
