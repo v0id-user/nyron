@@ -9,47 +9,78 @@ Nyron reads your Git history and parses **conventional commits** to generate str
 
 ## The Process
 
-Nyron follows a systematic approach to generate your changelogs:
+Nyron follows a systematic 7-step approach to generate your changelogs and create releases:
 
-### 1. Fetches commits
+### Step 1: Tag Discovery
 
-Nyron retrieves commits based on `nyron-release@*` tags, which serve as release boundaries:
+Nyron determines which `nyron-release@*` tags to use based on the mode:
 
-- **With `-n` flag**: Fetches commits **between** the previous `nyron-release@*` tag and the latest one
-- **Without `-n` flag**: Fetches commits from the latest `nyron-release@*` tag to HEAD
+**Mode 1: New Tag Release (with `-n` flag)**
+- Finds the latest tag (the one you just pushed with `push-tag`)
+- Finds the previous tag to compare against
+- Used when a nyron-release tag was just created and pushed
 
-<Callout type="info">
-**Important**: Nyron **only** uses `nyron-release@*` tags to determine release boundaries. Your project version tags (like `v1.0.0`, `@pkg/name@1.0.0`) are not used for this purpose. If you have an existing repository with many commits and tags, Nyron will only look at commits since the last `nyron-release@*` tag (or from the beginning if none exists).
+**Mode 2: Standard Release (without `-n` flag)**
+- Finds the latest `nyron-release@*` tag
+- Uses that tag as the starting point
+- Used for creating a release from existing state
+
+<Callout type="warn">
+**Important**: Nyron **only** uses `nyron-release@*` tags to determine release boundaries. Your project version tags (like `v1.0.0`, `@pkg/name@1.0.0`) are not used for this purpose. 
+
+**At least one nyron-release tag is required** - The `release` command will fail with an error if no `nyron-release@*` tag exists. You must create your first tag using `push-tag` before you can create releases.
 </Callout>
 
-### 2. Filters out meta commits
+### Step 2: Commit Extraction
 
-Version bumps, changelog updates, and other meta commits are automatically excluded from the changelog. This ensures your changelog focuses on meaningful changes rather than version management overhead.
+Nyron retrieves commits based on the tags discovered:
 
-### 3. Parses conventional commit syntax
+- **With `-n` flag**: Fetches commits **BETWEEN** the previous tag and the latest tag using GitHub API
+- **Without `-n` flag**: Fetches commits from the latest tag to HEAD
+- If no commits are found, the release is skipped (nothing new to release)
 
-Each commit is analyzed to extract:
-- **Type**: The category of change (feat, fix, docs, etc.)
-- **Scope**: The area of the codebase affected (optional)
-- **Message**: The description of the change
+### Step 3: Commit Parsing
 
-### 4. Groups commits
+Each commit message is analyzed using conventional commit format:
 
-Commits are organized into meaningful categories:
-- **Features**: New functionality
-- **Bug Fixes**: Bug fixes and corrections
-- **Chores**: Maintenance, documentation, refactoring
+- **Parses commit syntax**: Extracts type (feat, fix, docs, etc.), scope, and message
+- **Groups by type**: Organizes commits into categories (features, fixes, breaking changes, etc.)
+- **Extracts scopes**: Identifies package scopes from commit messages (e.g., `feat(cli): add feature`)
+- **Filters meta commits**: Version bumps, changelog updates, and other meta commits are automatically excluded
 
-### 5. Enriches with GitHub data
+### Step 4: Version Detection
 
-If a GitHub token is configured, Nyron adds:
-- Author usernames and links
-- Author avatars
-- Commit URLs linking to GitHub
+Nyron reads version information from `.nyron/meta.json`:
 
-### 6. Generates markdown
+- Contains package names, old versions, and new versions
+- Generated during `bump` or `push-tag` operations
+- Used to show which packages were updated and by how much in the changelog
 
-The final output is formatted as clean, readable markdown suitable for changelogs.
+### Step 5: Changelog Generation
+
+Generates markdown changelog from parsed commits and version data:
+
+- Formats into sections: Breaking Changes, Features, Bug Fixes, Chores, etc.
+- Includes package version updates and commit details
+- Enriches with GitHub data (author usernames, avatars, commit URLs) if GitHub token is configured
+- Produces clean, readable markdown suitable for GitHub releases
+
+### Step 6: GitHub Release Creation
+
+Creates the GitHub release:
+
+- **Dry Run**: Generates changelog and prints to console (no GitHub release created)
+- **Wet Run**: Creates actual GitHub release with the generated changelog as body
+- Uses the determined release tag (pushed tag with `-n`, latest tag without `-n`)
+- Publishes to the repository's releases page
+
+### Step 7: Tag Creation (Next Release Boundary)
+
+**Only executed without `-n` flag and not in dry-run mode:**
+
+- Creates a new `nyron-release@*` tag AFTER the release is published
+- Updates `meta.json` with the new tag
+- This tag marks the boundary for the NEXT release, not the current one
 
 ## Example Output
 
@@ -61,11 +92,17 @@ Here's what a generated changelog section looks like:
 
 ## Bug Fixes
 - **api**: resolve memory leak in endpoint ([@username](https://github.com/username)) [[e4f5g6h](https://github.com/owner/repo/commit/e4f5g6h)]
+
+## Version Updates
+- **cli**: 1.0.0 → 1.1.0
+- **sdk**: 2.3.0 → 2.4.0
 ```
+
+The changelog includes version information from `.nyron/meta.json`, showing which packages were updated and their version changes.
 
 ## Understanding Release Boundaries
 
-Nyron uses a dual-tag system:
+Nyron uses a dual-tag system that separates version tracking from release boundaries:
 
 ### Project Tags (Version Tracking)
 - Created by `nyron bump` command
@@ -79,20 +116,48 @@ Nyron uses a dual-tag system:
 - Purpose: Mark release boundaries for GitHub releases
 - **Only these tags** determine which commits are included in releases
 
-**Tag Creation Timing**:
-- **`nyron push-tag`**: Creates and pushes the tag immediately
-- **`nyron release` (without `-n`)**: Creates a new tag AFTER the release is published. This tag marks the boundary for the NEXT release, not the current one.
-- **`nyron release` (with `-n`)**: Does NOT create a tag. Uses the existing tag you pushed with `push-tag`.
+## Mental Model
 
-When you run `nyron release`:
-1. It finds the latest `nyron-release@*` tag (and previous tag if using `-n`)
-2. Fetches commits since that tag to HEAD (without `-n`) or between tags (with `-n`)
-3. Parses those commits to generate the changelog
-4. Creates a GitHub release
-5. **Creates a new nyron-release tag** (only without `-n` flag and not in dry-run) - This tag marks where the NEXT release will start from
+Here's how Nyron-release tags work as release boundaries:
+
+```
+nyron-release@date1 ---- A ---- B ---- C ---- nyron-release@date2 ---- D ---- E ---- HEAD
+                         └──────┬──────┘                                └─────┬─────┘
+                    commits for date2 release                    commits since date2
+```
+
+**Tag Creation Timing**:
+- **`nyron push-tag`**: Creates and pushes the tag immediately at the current HEAD
+- **`nyron release` (without `-n`)**: Creates a new tag AFTER the release is published. This tag marks the boundary for the NEXT release, not the current one.
+- **`nyron release` (with `-n`)**: Does NOT create a tag. Uses the existing tag you pushed with `push-tag` and fetches commits BETWEEN the previous tag and the tag you just pushed.
+
+## Two Release Modes
+
+### Mode 1: New Tag Release (with `-n` flag)
+
+Used when a nyron-release tag was just created and pushed:
+
+1. Finds the latest tag (the one just pushed)
+2. Finds the previous tag to compare against
+3. Gets commits BETWEEN these two tags
+4. Creates GitHub release for the pushed tag
+5. Does NOT create a new tag
+
+**Use case**: You've already pushed a tag with `push-tag` and want to create a release for commits between the previous release and the tag you just pushed.
+
+### Mode 2: Standard Release (without `-n` flag)
+
+Used for creating a release from existing state:
+
+1. Finds the latest `nyron-release@*` tag
+2. Gets commits from that tag to HEAD
+3. Creates GitHub release for the latest tag
+4. **Creates a new nyron-release tag** AFTER the release (marks boundary for NEXT release)
+
+**Use case**: You want to create a release for all commits since the last release, and have Nyron automatically mark where the next release will start from.
 
 <Callout type="warn">
-**For existing repositories**: If you're starting with Nyron on a repo that already has many commits and tags, create an initial `nyron-release@*` tag at your desired starting point. Future releases will only include commits after that tag. Without an initial tag, Nyron will include all commits from the beginning of your repository.
+**For existing repositories**: If you're starting with Nyron on a repo that already has many commits and tags, create an initial `nyron-release@*` tag at your desired starting point using `push-tag`. Future releases will only include commits after that tag. Without an initial tag, `release` will fail because it requires at least one nyron-release tag to exist.
 </Callout>
 
 ## What Makes It Work
