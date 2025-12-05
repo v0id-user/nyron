@@ -46,10 +46,12 @@ npx @nyron/cli bump --type patch --prefix @myapp/api@
 
 When you run `nyron bump`, it performs the following steps:
 
-1. **Fetches commits** since the last tag with the specified prefix
-2. **Generates changelog** based on conventional commits
-3. **Updates `package.json`** version in the project directory
-4. **Optionally prompts** to create a git tag
+1. **Increments the version** in `.nyron/meta.json` for the specified package prefix
+2. **Records the version** in `.nyron/versions.json` to track version history
+3. **Updates `package.json`** version in the project directory to match the new version
+4. **Synchronizes** version information across all three files to ensure consistency
+
+The command coordinates between the meta version system (`.nyron/meta.json`) and the versions tracking system (`.nyron/versions.json`) to ensure consistency across your monorepo, then updates the actual `package.json` file with the new version.
 
 ## Examples
 
@@ -61,8 +63,9 @@ npx @nyron/cli bump --type minor --prefix v
 
 This will:
 - Change version from `1.0.0` to `1.1.0`
-- Generate changelog with all features and fixes
-- Update the package.json file
+- Update `.nyron/meta.json` with the new version
+- Add the new version to `.nyron/versions.json` history
+- Update `package.json` in the project directory
 
 ### Bump a patch version for a monorepo package
 

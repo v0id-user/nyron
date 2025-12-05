@@ -74,16 +74,22 @@ Nyron uses a dual-tag system:
 - **Not used** as release boundaries
 
 ### Nyron-Release Tags (Release Boundaries)
-- Created by `nyron push-tag` or `nyron release` command
+- Created by `nyron push-tag` command or `nyron release` command (without `-n` flag)
 - Format: `nyron-release@2024-01-15@14-30-25.123`
 - Purpose: Mark release boundaries for GitHub releases
 - **Only these tags** determine which commits are included in releases
 
+**Tag Creation Timing**:
+- **`nyron push-tag`**: Creates and pushes the tag immediately
+- **`nyron release` (without `-n`)**: Creates a new tag AFTER the release is published. This tag marks the boundary for the NEXT release, not the current one.
+- **`nyron release` (with `-n`)**: Does NOT create a tag. Uses the existing tag you pushed with `push-tag`.
+
 When you run `nyron release`:
-1. It finds the latest `nyron-release@*` tag
-2. Fetches commits since that tag (or between tags with `-n`)
+1. It finds the latest `nyron-release@*` tag (and previous tag if using `-n`)
+2. Fetches commits since that tag to HEAD (without `-n`) or between tags (with `-n`)
 3. Parses those commits to generate the changelog
 4. Creates a GitHub release
+5. **Creates a new nyron-release tag** (only without `-n` flag and not in dry-run) - This tag marks where the NEXT release will start from
 
 <Callout type="warn">
 **For existing repositories**: If you're starting with Nyron on a repo that already has many commits and tags, create an initial `nyron-release@*` tag at your desired starting point. Future releases will only include commits after that tag. Without an initial tag, Nyron will include all commits from the beginning of your repository.

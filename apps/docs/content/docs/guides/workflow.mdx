@@ -25,19 +25,23 @@ npx @nyron/cli bump --type minor --prefix v
 git add .
 git commit -m "chore: bump version to 1.2.0"
 
-# 3. Create GitHub release (this also creates the nyron-release tag)
+# 3. Create GitHub release
+# Note: Requires at least one existing nyron-release tag.
+# After creating the release, it will create a NEW tag for the NEXT release.
 npx @nyron/cli release
 
-# 4. Push commits and tags
-git push
+# 4. Push commits and tags (including the new tag created by release)
+git push --follow-tags
 ```
 
 The `release` command automatically:
-- Finds the latest `nyron-release@*` tag (or uses first commit if none exists)
+- Finds the latest `nyron-release@*` tag (requires at least one to exist)
 - Fetches commits since that tag to HEAD
-- Generates a new `nyron-release@*` tag with timestamp
-- Creates and pushes the tag to GitHub
 - Creates the GitHub release with auto-generated changelog
+- **Creates a new `nyron-release@*` tag AFTER the release** (marks boundary for NEXT release)
+- Updates meta.json with the new tag
+
+**Important**: The tag is created AFTER the release, not before. Make sure to push tags with `git push --follow-tags` or `git push && git push --tags`.
 
 <Callout type="warn">
 **First-time use**: If this is your first release and no `nyron-release@*` tags exist, `release` will include all commits from the beginning of your repository history. For existing repos with many commits, consider creating an initial `nyron-release@*` tag first using `push-tag` to establish a baseline.
@@ -72,7 +76,12 @@ git push
 - Proves authenticity of the release
 - Works seamlessly with CI/CD workflows
 
-**Understanding the `-n` flag**: When you use `push-tag`, it creates a `nyron-release@*` tag. The `-n` flag tells `release` to use that existing tag instead of creating a duplicate. Without `-n`, `release` would create a new tag, which isn't what you want when you've already pushed one.
+**Understanding the `-n` flag**: When you use `push-tag`, it creates a `nyron-release@*` tag. The `-n` flag tells `release` to:
+- Use the existing tag you just pushed (instead of creating a duplicate)
+- Fetch commits BETWEEN the previous tag and the tag you just pushed
+- NOT create a new tag after the release
+
+Without `-n`, `release` would fetch commits FROM the latest tag to HEAD and create a new tag AFTER the release (for the next release), which isn't what you want when you've already pushed a tag.
 
 ## Monorepo Workflow
 
@@ -88,11 +97,12 @@ npx @nyron/cli bump --type patch --prefix @myapp/api@
 git add .
 git commit -m "chore(api): bump version to 1.0.1"
 
-# Create release (creates nyron-release tag automatically)
+# Create release
+# Note: After creating the release, it will create a NEW tag for the NEXT release.
 npx @nyron/cli release
 
-# Push commits and tags
-git push
+# Push commits and tags (including the new tag created by release)
+git push --follow-tags
 ```
 
 <Callout type="info">
@@ -219,8 +229,8 @@ git push
 ```bash
 npx @nyron/cli bump --type minor --prefix v
 git add . && git commit -m "chore: bump version to 1.2.0"
-npx @nyron/cli release  # Creates tag & release locally
-git push
+npx @nyron/cli release  # Creates release, then creates tag for NEXT release
+git push --follow-tags  # Push commits and the new tag
 ```
 
 **Automated Release (With CI/CD):**
@@ -228,7 +238,7 @@ git push
 npx @nyron/cli bump --type minor --prefix v
 git add . && git commit -m "chore: bump version to 1.2.0"
 npx @nyron/cli push-tag  # Creates GPG-signed tag, triggers CI/CD
-git push  # CI/CD creates the release for you
+git push  # CI/CD creates the release for you (using -n flag)
 ```
 
 **Benefits of Automated Workflow:**

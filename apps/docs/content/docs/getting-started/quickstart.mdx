@@ -169,10 +169,11 @@ npx @nyron/cli push-tag
 npx @nyron/cli release -n
 ```
 
-**Why use `-n`?** The `-n` (or `--no-tag`) flag tells Nyron to use the nyron-release tag you just pushed with `push-tag`, rather than creating a duplicate tag. This is especially important when:
+**Why use `-n`?** The `-n` (or `--no-tag`) flag tells Nyron to use the nyron-release tag you just pushed with `push-tag`, rather than creating a duplicate tag. When using `-n`, the command fetches commits BETWEEN the previous tag and the tag you just pushed. This is especially important when:
 - You want GPG-signed tags (created locally with `push-tag`)
 - You're using CI/CD workflows that trigger on tag pushes
 - You've already created a nyron-release tag manually
+- You want to control exactly when tags are created
 
 ### Simplified Workflow (Alternative)
 
@@ -186,15 +187,19 @@ npx @nyron/cli bump --type minor --prefix v
 git add .
 git commit -m "chore: bump version to 1.2.0"
 
-# 3. Create GitHub release (creates nyron-release tag automatically)
+# 3. Create GitHub release
+# Note: This requires at least one existing nyron-release tag.
+# After creating the release, it will create a NEW tag for the NEXT release.
 npx @nyron/cli release
 
-# 4. Push commits and tags
-git push
+# 4. Push commits and tags (including the new tag created by release)
+git push --follow-tags
 ```
 
+**Important**: When using `release` without `-n`, it creates a new nyron-release tag AFTER the release is published. This tag marks the boundary for the NEXT release. Make sure to push tags with `git push --follow-tags` or `git push && git push --tags`.
+
 <Callout type="info">
-**When to use `-n`**: Always use `-n` when you've already created a nyron-release tag (with `push-tag` or manually). Without `-n`, the `release` command will create a new nyron-release tag, which may not be what you want.
+**When to use `-n`**: Always use `-n` when you've already created a nyron-release tag (with `push-tag` or manually). Without `-n`, the `release` command will create a new nyron-release tag AFTER the release, which marks where the NEXT release will start from.
 </Callout>
 
 ## Next Steps
