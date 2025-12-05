@@ -3,6 +3,9 @@
   "workspaces": {
     "": {
       "name": "nyron",
+      "dependencies": {
+        "arktype": "^2.1.28",
+      },
       "devDependencies": {
         "@nyron/cli": "workspace:*",
         "@types/node": "^24.7.2",

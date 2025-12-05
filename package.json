@@ -21,5 +21,8 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "arktype": "^2.1.28"
+  }
 }
