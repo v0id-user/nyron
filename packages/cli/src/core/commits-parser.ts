@@ -77,6 +77,10 @@ export function filterMetaCommits(commits: CommitDiff[]): CommitDiff[] {
  * ```
  */
 export function parseCommits(commits: CommitDiff[]): ParsedCommits {
+  if (commits.length === 0) {
+    throw new Error('Cannot parse commits: commits array is empty')
+  }
+
   const groups: ParsedCommits = {}
 
   for (const commit of commits) {

@@ -34,7 +34,7 @@
  * ### 2. Commit Extraction
  * - **With -n**: Fetches commits BETWEEN previous and latest tag using GitHub API
  * - **Without -n**: Fetches commits from latest tag to HEAD
- * - If no commits found, the release is skipped (nothing new to release)
+ * - If no commits found, throws an error (cannot create release without commits)
  * 
  * ### 3. Commit Parsing
  * - Parses commit messages using conventional commit format (feat:, fix:, etc.)
@@ -78,9 +78,9 @@ import { setMetaLatestTag } from "../nyron/meta/writer"
  * @param options - Release configuration options
  * @param options.dryRun - If true, prints changelog without creating release
  * 
- * @returns Promise<void | { generated: false, reason: string }> - Returns void on success, or error object if no commits found
+ * @returns Promise<void> - Returns void on success
  * 
- * @throws {Error} If no nyron release tag found
+ * @throws {Error} If no nyron release tag found or if no commits are found
  * 
  * @example
  * ```ts
@@ -135,8 +135,10 @@ export const release = async (options: ReleaseOptions) => {
       ? await getCommitsBetween(fromTag!, releaseTag!, config.repo)
       : await getCommitsSince(fromTag, config.repo)
     if (commits.length === 0) {
-      console.log('⚠️  No commits found between tags - skipping release')
-      return { generated: false, reason: "No commits found between tags" }
+      const tagRange = options.newTag 
+        ? `between ${fromTag} and ${releaseTag}`
+        : `since ${fromTag}`
+      throw new Error(`No commits found ${tagRange}\n   → Cannot create a release without commits`)
     }
     console.log(`✓ Found ${commits.length} commit(s)`)
   
