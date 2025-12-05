@@ -1,7 +1,7 @@
 import { defineConfig } from "@nyron/cli/config"
 
 export default defineConfig({
-  repo: "erebus-sh/nyron",
+  repo: "v0id-user/nyron",
   projects: {
     cli: {
       tagPrefix: "cli-v",
