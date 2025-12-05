@@ -60,6 +60,10 @@ An object defining all projects in your repository. Each key is a project name, 
 - `tagPrefix`: The prefix used for git tags (e.g., `"v"`, `"@pkg/name@"`)
 - `path`: The path to the project directory relative to repository root
 
+<Callout type="info">
+**Note**: The `tagPrefix` you configure here is used for **project tags** (version tracking), not for nyron-release tags. Nyron-release tags always use the format `nyron-release@*` and are independent of your `tagPrefix` configuration. Your existing tags won't interfere with Nyron, and Nyron won't use them as release boundaries.
+</Callout>
+
 ### `autoChangelog`
 
 **Type:** `boolean`  
@@ -101,6 +105,14 @@ export default defineConfig({
 ```
 
 Nyron will track each project independently based on their tag prefixes.
+
+<Callout type="info">
+**Understanding Tag Systems**: Remember that Nyron uses two separate tag systems:
+- **Project tags** (from `tagPrefix`): Used for version tracking and created by `nyron bump`
+- **Nyron-release tags** (`nyron-release@*`): Used as release boundaries and created by `nyron push-tag` or `nyron release`
+
+These are independent - your project tag prefixes don't affect nyron-release tags, and existing tags in your repo won't interfere with Nyron's operation.
+</Callout>
 
 ## Single Package Setup
 

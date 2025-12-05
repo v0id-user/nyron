@@ -81,34 +81,121 @@ Generate a token at [GitHub Settings → Developer settings → Personal access 
 A GitHub token is required for Nyron to access repository metadata, commit information, and create releases. Be sure to select all the permissions listed above. Without the correct permissions, Nyron will not work.
 </Callout>
 
+## Understanding Nyron Tags
+
+Nyron uses a **dual-tag system** that separates version tracking from release boundaries:
+
+### Project Tags (Version Tracking)
+- **Format**: `v1.2.0`, `@pkg/name@1.2.0` (based on your `tagPrefix` config)
+- **Created by**: `nyron bump` command
+- **Purpose**: Track package versions in your repository
+- **Used for**: Version metadata, changelog file generation
+
+### Nyron-Release Tags (Release Boundaries)
+- **Format**: `nyron-release@2024-01-15@14-30-25.123`
+- **Created by**: `nyron push-tag` or `nyron release` command
+- **Purpose**: Mark release boundaries for GitHub releases
+- **Used for**: Determining which commits to include in releases
+
+<Callout type="info">
+**Important**: Nyron **only** uses `nyron-release@*` tags to determine release boundaries. Your existing tags (like `v1.0.0`, `v2.0.0`, etc.) won't interfere with Nyron, but they also won't be used as release boundaries. Nyron-release tags are completely independent of your project tag prefixes.
+</Callout>
+
+## Starting with an Existing Repository
+
+If your repository already has many commits and tags (e.g., 500+ commits with various version tags), here's how to get started:
+
+### Step 1: Initialize Nyron
+
+```bash
+npx @nyron/cli init
+```
+
+Edit `nyron.config.ts` to match your project structure. Your existing tags won't interfere with Nyron.
+
+### Step 2: Create Your First Nyron-Release Tag
+
+For existing repositories, you need to establish a baseline nyron-release tag. This marks where Nyron will start tracking releases from:
+
+```bash
+# First, bump your version (if needed)
+npx @nyron/cli bump --type minor --prefix v
+
+# Commit the changes
+git add .
+git commit -m "chore: initialize nyron"
+
+# Create and push the first nyron-release tag
+npx @nyron/cli push-tag
+```
+
+This creates your first `nyron-release@*` tag at the current HEAD. Future releases will include commits since this tag.
+
+<Callout type="warn">
+**For existing repos**: When you create your first nyron-release tag, Nyron will use all commits from that tag forward for future releases. If you want to create a release for commits that happened before this tag, you'll need to manually create a nyron-release tag at an earlier commit point first.
+</Callout>
+
+### Step 3: Create Your First Release
+
+After pushing your first nyron-release tag, create a release:
+
+```bash
+# Use -n flag since you already pushed the tag
+npx @nyron/cli release -n
+```
+
+The `-n` flag tells Nyron to use the existing nyron-release tag you just pushed, rather than creating a new one.
+
 ## Start Using Nyron
 
 Now you're ready to use Nyron! Here's the typical workflow:
 
-### 1. Bump version and auto-generate changelog
+### Standard Workflow (Recommended)
+
+This workflow uses GPG-signed tags and separates tag creation from release creation:
 
 ```bash
+# 1. Bump version and auto-generate changelog
 npx @nyron/cli bump --type minor --prefix v
-```
 
-### 2. Commit your changes
-
-```bash
+# 2. Commit your changes
 git add .
 git commit -m "chore: bump version to 1.2.0"
-```
 
-### 3. Create and push nyron-release tag
-
-```bash
+# 3. Create and push nyron-release tag (GPG-signed if configured)
 npx @nyron/cli push-tag
+
+# 4. Create GitHub release (use -n since tag already exists)
+npx @nyron/cli release -n
 ```
 
-### 4. Create GitHub release
+**Why use `-n`?** The `-n` (or `--no-tag`) flag tells Nyron to use the nyron-release tag you just pushed with `push-tag`, rather than creating a duplicate tag. This is especially important when:
+- You want GPG-signed tags (created locally with `push-tag`)
+- You're using CI/CD workflows that trigger on tag pushes
+- You've already created a nyron-release tag manually
+
+### Simplified Workflow (Alternative)
+
+If you don't need GPG-signed tags, you can let `release` create the tag automatically:
 
 ```bash
+# 1. Bump version and auto-generate changelog
+npx @nyron/cli bump --type minor --prefix v
+
+# 2. Commit your changes
+git add .
+git commit -m "chore: bump version to 1.2.0"
+
+# 3. Create GitHub release (creates nyron-release tag automatically)
 npx @nyron/cli release
+
+# 4. Push commits and tags
+git push
 ```
+
+<Callout type="info">
+**When to use `-n`**: Always use `-n` when you've already created a nyron-release tag (with `push-tag` or manually). Without `-n`, the `release` command will create a new nyron-release tag, which may not be what you want.
+</Callout>
 
 ## Next Steps
 
