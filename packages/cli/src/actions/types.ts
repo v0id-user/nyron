@@ -3,22 +3,13 @@ import type { BumpType } from "../core/types"
 
 /**
  * Command-line options for the bump action.
- * Used to specify how a project's version should be incremented.
+ * Used to specify how a configured project's version should be incremented.
  */
 export interface BumpOptions extends OptionValues {
     /** The type of version bump to perform (major, minor, patch) */
     type: BumpType
-    /** The tag prefix for the project to bump (e.g., "@my-package/sdk@") */
-    prefix: string
-}
-  
-/**
- * Command-line options for the diff action.
- * Used to analyze changes since the last release for one or more projects.
- */
-export interface DiffOptions extends OptionValues {
-    /** Optional tag prefix filter to analyze only specific projects */
-    prefix?: string
+    /** The configured project id/key to bump (e.g., "cli" or "api") */
+    project?: string
 }
 
 /**
@@ -28,18 +19,6 @@ export interface DiffOptions extends OptionValues {
 export interface InitOptions extends OptionValues {
     /** Whether to overwrite an existing configuration file */
     force?: boolean
-    // TODO: Add json option and handle it
-}
-
-/**
- * Command-line options for the tag action.
- * Used to create a new git tag for a specific project version.
- */
-export interface TagOptions extends OptionValues {
-    /** The tag prefix for the project (e.g., "@my-package/sdk@") */
-    prefix: string
-    /** The version string to tag (e.g., "1.2.3") */
-    version: string
 }
 
 // -----------------------------
@@ -53,40 +32,10 @@ export interface TagOptions extends OptionValues {
 export interface BumpResult {
     /** Whether the bump operation completed successfully */
     success: boolean
-    /** The tag prefix that was bumped */
-    prefix: string
+    /** The project id that was bumped */
+    project: string
     /** The new version that was created (e.g., "1.2.4") */
     newVersion?: string
-}
-
-/**
- * Result for a single project analyzed by the diff action.
- * Contains information about changes since the last release for one project.
- */
-export interface ProjectDiffResult {
-    /** The project name from nyron.config.ts */
-    name: string
-    /** The tag prefix for this project */
-    tagPrefix: string
-    /** The most recent tag for this project, if any exists */
-    latestTag?: string
-    /** Number of commits since the latest tag */
-    commitsSinceLatest: number
-    /** Array of commit messages since the latest tag */
-    commitMessages: string[]
-    /** Whether this project needs an initial tag (no tags exist yet) */
-    needsInitialTag: boolean
-}
-
-/**
- * Result returned by the diff action.
- * Contains analysis results for all projects and summary information.
- */
-export interface DiffResult {
-    /** Array of results for each analyzed project */
-    results: ProjectDiffResult[]
-    /** Total number of projects that were analyzed */
-    totalProjectsAnalyzed: number
 }
 
 /**
@@ -104,6 +53,5 @@ export interface InitResult {
 
 export interface ReleaseOptions extends OptionValues {
     dryRun?: boolean
-    prerelease?: boolean
-    newTag?: boolean
+    useExistingTag?: boolean
 }
