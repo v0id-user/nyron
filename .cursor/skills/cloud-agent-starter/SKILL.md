@@ -186,8 +186,8 @@ Use this area for GitHub webhook handlers, PR parsing, comment generation, and P
    - `cd /workspace/apps/nyron-bot`
 2. Build the TypeScript output:
    - `bun run build`
-3. Run the automated tests:
-   - `bun run test`
+3. Run the automated tests in non-watch mode:
+   - `bunx vitest run`
 
 ### Live app startup
 
@@ -211,7 +211,7 @@ The bot can run locally, but live webhook testing is not the default starting po
 #### Standard bot change workflow
 
 - `cd /workspace/apps/nyron-bot && bun run build`
-- `cd /workspace/apps/nyron-bot && bun run test`
+- `cd /workspace/apps/nyron-bot && bunx vitest run`
 
 #### Webhook-handler work
 
@@ -220,7 +220,7 @@ Use the mocked tests first. Only attempt live GitHub delivery if credentials and
 Recommended order:
 
 1. `cd /workspace/apps/nyron-bot && bun run build`
-2. `cd /workspace/apps/nyron-bot && bun run test`
+2. `cd /workspace/apps/nyron-bot && bunx vitest run`
 3. only then consider `bun run start` for manual verification
 
 ## Choosing the right workflow fast
@@ -236,7 +236,7 @@ Recommended order:
 - Changed bot logic:
   - work in `apps/nyron-bot`
   - run `bun run build`
-  - then `bun run test`
+  - then `bunx vitest run`
 - Changed multiple workspaces:
   - finish with repo-root `bun run build`
 
