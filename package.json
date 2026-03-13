@@ -7,7 +7,9 @@
   "scripts": {
     "build": "turbo build",
     "lint": "turbo lint",
-    "dev": "turbo dev"
+    "dev": "turbo dev",
+    "test": "bun run test:cli",
+    "test:cli": "bun test packages/cli/tests"
   },
   "devDependencies": {
     "@nyron/cli": "workspace:*",

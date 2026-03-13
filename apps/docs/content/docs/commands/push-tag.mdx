@@ -21,7 +21,7 @@ The `push-tag` command:
 2. **Creates the git tag** locally (with GPG signing if available)
 3. **Pushes the tag** to the remote repository
 4. **Updates meta.json** with the latest release tag
-5. **Triggers automated workflows** that process the .nyron/ directory
+5. **Triggers automated workflows** that listen for `nyron-release@*` tags
 
 ## GPG Signing
 
@@ -82,8 +82,8 @@ This format ensures:
 ## Prerequisites
 
 - **Required:** Changes must be committed to git
-- **Required:** `.nyron/` directory must contain version metadata (created by `bump` command)
-- **Recommended:** Push permissions to the repository
+- **Required:** `nyron.config.ts` and `.nyron/` metadata should already exist (usually from `nyron init`)
+- **Recommended:** Push permissions to the configured `origin` remote
 
 ## When to Use push-tag
 
@@ -91,13 +91,13 @@ The `push-tag` command is **optional**. Use it when you want to:
 
 - **GPG-sign your release tags** locally before pushing
 - **Trigger automated CI/CD workflows** that create releases
-- **Manually control when tags are created** (instead of letting `release` create them)
+- **Manually control when release boundaries are created**
 
 ### Option 1: Use push-tag with automated workflow
 
 ```bash
-# 1. Bump version and generate changelog
-npx @nyron/cli bump --type minor --prefix v
+# 1. Bump version
+npx @nyron/cli bump --type minor
 
 # 2. Commit changes  
 git add .
@@ -109,34 +109,30 @@ npx @nyron/cli push-tag
 # 4. Push commits
 git push
 
-# Your CI/CD workflow will run: nyron release -n
+# Your CI/CD workflow will run: nyron release --use-existing-tag
 ```
 
 ### Option 2: Skip push-tag (simpler)
 
 ```bash
-# 1. Bump version and generate changelog
-npx @nyron/cli bump --type minor --prefix v
+# 1. Bump version
+npx @nyron/cli bump --type minor
 
-# 2. Commit changes  
+# 2. Commit changes
 git add .
 git commit -m "chore: bump version to 1.2.0"
 
-# 3. Create release (this also creates the tag)
+# 3. Publish directly (Nyron creates the next boundary tag for you)
 npx @nyron/cli release
-
-# 4. Push commits
-git push
 ```
 
 ## What Happens Next
 
-After pushing a nyron-release tag:
+After pushing a `nyron-release@*` tag:
 
 1. **Automated workflows** can detect the new tag
-2. **Version information** is extracted from .nyron/ directory  
-3. **Changelog generation** becomes possible via `release` command
-4. **Release automation** can process the accumulated changes
+2. **`nyron release --use-existing-tag`** can build release notes for that exact boundary
+3. **GitHub releases** can be published from CI or locally
 
 ## Examples
 
@@ -158,7 +154,7 @@ Sample output:
 
 ```bash
 # Bump first
-npx @nyron/cli bump --type minor --prefix v
+npx @nyron/cli bump --type minor
 
 # Commit the changes
 git add .
@@ -173,7 +169,7 @@ npx @nyron/cli push-tag
 Nyron uses a dual-tag system:
 
 ### Project Tags (from bump command)
-- Format: `v1.2.0`, `@pkg/name@1.2.0`  
+- Format: depends on your configured `tagPrefix` (for example `v1.2.0`, `@pkg/name@1.2.0`)  
 - **Purpose:** Mark specific package versions
 - **Created by:** `bump` command
 - **Used for:** Version tracking, changelog boundaries
@@ -192,11 +188,11 @@ Error: Working directory not clean
 ```
 Commit your changes first before running `push-tag`.
 
-**No .nyron/ directory:**
+**No `.nyron/` directory:**
 ```
 Error: No version metadata found
 ```
-Run `nyron bump` first to generate version information.
+Run `nyron init` first to create the initial Nyron metadata.
 
 **Push permission denied:**
 ```
@@ -234,12 +230,12 @@ jobs:
         with:
           bun-version: latest
       - run: bun install
-      - run: bun x @nyron/cli release -n
+      - run: bun x @nyron/cli release --use-existing-tag
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 ```
 
-**Important:** Use the `-n` flag in the workflow to prevent creating a duplicate tag, since you already created it locally with `push-tag`.
+**Important:** Use the `--use-existing-tag` flag in the workflow to prevent creating a duplicate tag, since you already created it locally with `push-tag`.
 
 ### How It Works
 
@@ -248,10 +244,10 @@ When you run `npx @nyron/cli push-tag` locally:
 1. ✅ Tag is created locally (with GPG signing if configured)
 2. ✅ Tag is pushed to GitHub
 3. ✅ GitHub Actions workflow is triggered automatically
-4. ✅ Workflow runs `nyron release -n` (skips tag creation)
+4. ✅ Workflow runs `nyron release --use-existing-tag` (skips tag creation)
 5. ✅ GitHub release is created with auto-generated changelog
 
-This means you only need to run `push-tag` locally, and the CI/CD workflow handles creating the actual GitHub release!
+This means you only need to run `push-tag` locally, and the CI/CD workflow handles creating the actual GitHub release.
 
 See the complete [automated workflow guide](/docs/guides/workflow#automated-release-workflow) for more details and customization options.
 

@@ -1,6 +1,7 @@
 import { describe, it, expect, mock, beforeEach, spyOn } from "bun:test"
 import { init } from "../../src/actions/init"
 import type { InitOptions } from "../../src/actions/types"
+import type { DiscoveredProject } from "../../src/utils/discoverProjects"
 
 // Mock console methods
 const mockConsoleLog = spyOn(console, "log").mockImplementation(() => {})
@@ -10,8 +11,20 @@ const mockExistsSync = mock(() => false)
 const mockWriteFileSync = mock(() => {})
 
 // Mock dependencies
-const mockDetectEnvironmentAndOfferInstall = mock(() => Promise.resolve())
-const mockCreateNyronDirectory = mock(() => {})
+const mockDetectRepoSlug = mock(() => Promise.resolve("acme/example"))
+const mockDiscoverProjects = mock(
+  (): Promise<DiscoveredProject[]> =>
+    Promise.resolve([
+      {
+        id: "cli",
+        path: "packages/cli",
+        packageName: "@acme/cli",
+        version: "1.2.3",
+        tagPrefix: "@acme/cli@",
+      },
+    ]),
+)
+const mockSyncNyronState = mock(() => Promise.resolve())
 
 // Mock modules
 mock.module("fs", () => ({
@@ -19,12 +32,16 @@ mock.module("fs", () => ({
   writeFileSync: mockWriteFileSync
 }))
 
-mock.module("../../src/utils/detectEnvironment", () => ({
-  detectEnvironmentAndOfferInstall: mockDetectEnvironmentAndOfferInstall
+mock.module("../../src/utils/detectRepo", () => ({
+  detectRepoSlug: mockDetectRepoSlug
 }))
 
-mock.module("../../src/nyron/creator", () => ({
-  createNyronDirectory: mockCreateNyronDirectory
+mock.module("../../src/utils/discoverProjects", () => ({
+  discoverProjects: mockDiscoverProjects
+}))
+
+mock.module("../../src/nyron/state", () => ({
+  syncNyronState: mockSyncNyronState
 }))
 
 describe("init", () => {
@@ -33,8 +50,9 @@ describe("init", () => {
     mockConsoleLog.mockClear()
     mockExistsSync.mockClear()
     mockWriteFileSync.mockClear()
-    mockDetectEnvironmentAndOfferInstall.mockClear()
-    mockCreateNyronDirectory.mockClear()
+    mockDetectRepoSlug.mockClear()
+    mockDiscoverProjects.mockClear()
+    mockSyncNyronState.mockClear()
 
     // Reset to default implementations
     mockExistsSync.mockReturnValue(false)
@@ -49,8 +67,9 @@ describe("init", () => {
     expect(result.filepath).toContain("nyron.config.ts")
     expect(result.overwritten).toBe(false)
     
-    expect(mockDetectEnvironmentAndOfferInstall).toHaveBeenCalledTimes(1)
-    expect(mockCreateNyronDirectory).toHaveBeenCalledTimes(1)
+    expect(mockDetectRepoSlug).toHaveBeenCalledTimes(1)
+    expect(mockDiscoverProjects).toHaveBeenCalledTimes(1)
+    expect(mockSyncNyronState).toHaveBeenCalledTimes(1)
     expect(mockWriteFileSync).toHaveBeenCalledTimes(1)
     expect(mockConsoleLog).toHaveBeenCalledWith("✅ Created nyron.config.ts")
   })
@@ -66,7 +85,7 @@ describe("init", () => {
     expect(mockConsoleLog).toHaveBeenCalledWith("⚠️  Configuration already exists: nyron.config.ts")
     expect(mockConsoleLog).toHaveBeenCalledWith("   → Use --force to overwrite")
     expect(mockWriteFileSync).not.toHaveBeenCalled()
-    expect(mockCreateNyronDirectory).not.toHaveBeenCalled()
+    expect(mockSyncNyronState).not.toHaveBeenCalled()
   })
 
   it("should overwrite existing config file with force option", async () => {
@@ -77,8 +96,8 @@ describe("init", () => {
     
     expect(result.created).toBe(true)
     expect(result.overwritten).toBe(true)
-    expect(mockDetectEnvironmentAndOfferInstall).toHaveBeenCalledTimes(1)
-    expect(mockCreateNyronDirectory).toHaveBeenCalledTimes(1)
+    expect(mockDetectRepoSlug).toHaveBeenCalledTimes(1)
+    expect(mockSyncNyronState).toHaveBeenCalledTimes(1)
     expect(mockWriteFileSync).toHaveBeenCalledTimes(1)
     expect(mockConsoleLog).toHaveBeenCalledWith("✅ Created nyron.config.ts")
   })
@@ -98,9 +117,26 @@ describe("init", () => {
     expect(call).toBeDefined()
     const writtenContent = call[1] as string
     expect(writtenContent).toContain("export default defineConfig")
-    expect(writtenContent).toContain("repo: \"owner/repo\"")
-    expect(writtenContent).toContain("projects:")
-    expect(writtenContent).toContain("autoChangelog: true")
-    expect(writtenContent).toContain("onPushReminder: true")
+    expect(writtenContent).toContain('repo: "acme/example"')
+    expect(writtenContent).toContain('"cli"')
+    expect(writtenContent).toContain('tagPrefix: "@acme/cli@"')
+    expect(writtenContent).not.toContain("autoChangelog")
+    expect(writtenContent).not.toContain("onPushReminder")
+  })
+
+  it("should fall back to a single main project when discovery is empty", async () => {
+    mockDiscoverProjects.mockResolvedValueOnce([])
+
+    await init({})
+
+    expect(mockSyncNyronState).toHaveBeenCalledWith({
+      repo: "acme/example",
+      projects: {
+        main: {
+          tagPrefix: "v",
+          path: ".",
+        },
+      },
+    })
   })
 })

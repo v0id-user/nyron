@@ -8,7 +8,7 @@ description: A typical versioning workflow using Nyron
 Here's a typical end-to-end versioning workflow using Nyron, from checking changes to creating a release.
 
 <Callout type="info">
-**Understanding Release Boundaries**: Nyron uses `nyron-release@*` tags to determine which commits to include in releases. These tags are separate from your project version tags (like `v1.0.0`). When you run `release`, Nyron looks for the latest `nyron-release@*` tag and includes all commits since that tag (or between tags if using `-n`). Your existing tags won't interfere with this process.
+**Understanding Release Boundaries**: Nyron uses `nyron-release@*` tags to determine which commits to include in releases. These tags are separate from your project version tags (like `v1.0.0`). When you run `release`, Nyron looks for the latest `nyron-release@*` tag and includes all commits since that tag (or between tags if using `--use-existing-tag`). Your existing tags won't interfere with this process.
 </Callout>
 
 ## Complete Release Workflow
@@ -19,7 +19,7 @@ The simplest workflow without manual tag pushing:
 
 ```bash
 # 1. Bump version and generate changelog
-npx @nyron/cli bump --type minor --prefix v
+npx @nyron/cli bump --type minor
 
 # 2. Commit changes
 git add .
@@ -53,7 +53,7 @@ If you want to GPG-sign your release tags locally before pushing:
 
 ```bash
 # 1. Bump version and generate changelog
-npx @nyron/cli bump --type minor --prefix v
+npx @nyron/cli bump --type minor
 
 # 2. Commit changes
 git add .
@@ -62,8 +62,8 @@ git commit -m "chore: bump version to 1.2.0"
 # 3. Create and push GPG-signed nyron-release tag
 npx @nyron/cli push-tag
 
-# 4. Create GitHub release (use -n since tag already exists)
-npx @nyron/cli release -n
+# 4. Create GitHub release (use --use-existing-tag since tag already exists)
+npx @nyron/cli release --use-existing-tag
 
 # 5. Push commits
 git push
@@ -76,12 +76,12 @@ git push
 - Proves authenticity of the release
 - Works seamlessly with CI/CD workflows
 
-**Understanding the `-n` flag**: When you use `push-tag`, it creates a `nyron-release@*` tag. The `-n` flag tells `release` to:
+**Understanding the `--use-existing-tag` flag**: When you use `push-tag`, it creates a `nyron-release@*` tag. The `--use-existing-tag` flag tells `release` to:
 - Use the existing tag you just pushed (instead of creating a duplicate)
 - Fetch commits BETWEEN the previous tag and the tag you just pushed
 - NOT create a new tag after the release
 
-Without `-n`, `release` would fetch commits FROM the latest tag to HEAD and create a new tag AFTER the release (for the next release), which isn't what you want when you've already pushed a tag.
+Without `--use-existing-tag`, `release` would fetch commits from the latest tag to `HEAD` and create the next boundary tag after publishing, which isn't what you want when you've already pushed a tag.
 
 ## Monorepo Workflow
 
@@ -91,7 +91,7 @@ For monorepos with multiple packages, the workflow is the same but you specify w
 
 ```bash
 # Bump specific package
-npx @nyron/cli bump --type patch --prefix @myapp/api@
+npx @nyron/cli bump --type patch --project api
 
 # Commit changes
 git add .
@@ -113,7 +113,7 @@ git push --follow-tags
 
 ```bash
 # Bump specific package
-npx @nyron/cli bump --type patch --prefix @myapp/api@
+npx @nyron/cli bump --type patch --project api
 
 # Commit changes
 git add .
@@ -123,7 +123,7 @@ git commit -m "chore(api): bump version to 1.0.1"
 npx @nyron/cli push-tag
 
 # Create release (skip tag creation)
-npx @nyron/cli release -n
+npx @nyron/cli release --use-existing-tag
 
 # Push commits
 git push
@@ -198,12 +198,12 @@ jobs:
           bun-version: latest
 
       - run: bun install
-      - run: bun x @nyron/cli release -n
+      - run: bun x @nyron/cli release --use-existing-tag
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 ```
 
-**Note:** The `-n` flag tells the release command to use the existing `nyron-release@*` tag you pushed with `push-tag`, rather than creating a duplicate tag. This is essential when using CI/CD workflows.
+**Note:** The `--use-existing-tag` flag tells the release command to use the existing `nyron-release@*` tag you pushed with `push-tag`, rather than creating a duplicate tag. This is essential when using CI/CD workflows.
 
 ### Usage
 
@@ -211,7 +211,7 @@ When ready to release:
 
 ```bash
 # 1. Bump and commit
-npx @nyron/cli bump --type minor --prefix v
+npx @nyron/cli bump --type minor
 git add . && git commit -m "chore: bump version to 1.2.0"
 
 # 2. Push tag (creates GPG-signed tag and triggers the workflow)
@@ -227,7 +227,7 @@ git push
 
 **Local Release (No CI/CD):**
 ```bash
-npx @nyron/cli bump --type minor --prefix v
+npx @nyron/cli bump --type minor
 git add . && git commit -m "chore: bump version to 1.2.0"
 npx @nyron/cli release  # Creates release, then creates tag for NEXT release
 git push --follow-tags  # Push commits and the new tag
@@ -235,10 +235,10 @@ git push --follow-tags  # Push commits and the new tag
 
 **Automated Release (With CI/CD):**
 ```bash
-npx @nyron/cli bump --type minor --prefix v
+npx @nyron/cli bump --type minor
 git add . && git commit -m "chore: bump version to 1.2.0"
 npx @nyron/cli push-tag  # Creates GPG-signed tag, triggers CI/CD
-git push  # CI/CD creates the release for you (using -n flag)
+git push  # CI/CD creates the release for you (using --use-existing-tag)
 ```
 
 **Benefits of Automated Workflow:**
@@ -270,10 +270,6 @@ You can modify the workflow to use npm, pnpm, or Node.js instead of Bun:
 ```
 
 ## Pro Tips
-
-### Use the reminder feature
-
-If you have `onPushReminder: true` in your config, Nyron will remind you to push your tags after creating them.
 
 ### Preview releases
 

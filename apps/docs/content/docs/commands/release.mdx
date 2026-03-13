@@ -5,7 +5,7 @@ description: Create GitHub releases with auto-generated changelogs
 
 # nyron release
 
-Create GitHub releases with auto-generated changelogs based on commits between nyron-release tags.
+Generate release notes and optionally publish a GitHub release.
 
 ## Usage
 
@@ -19,10 +19,10 @@ npx @nyron/cli release
 npx @nyron/cli release --dry-run
 ```
 
-### Skip tag creation (use existing tag)
+### Publish using the tag you already pushed
 
 ```bash
-npx @nyron/cli release -n
+npx @nyron/cli release --use-existing-tag
 ```
 
 ## Options
@@ -35,46 +35,53 @@ npx @nyron/cli release -n
 npx @nyron/cli release --dry-run
 ```
 
-### `-n, --no-tag`
+### `-n, --use-existing-tag`
 
-**Optional.** Skip creating a new nyron-release tag. Use this when:
-- You already created a tag with `push-tag` command
-- Running in CI/CD after tag was pushed locally
-- You want to use a GPG-signed tag created manually
+**Optional.** Use the latest existing Nyron release tag as the release boundary.
 
-**Important**: When using `-n`, the command fetches commits BETWEEN the previous tag and the latest tag (the one you just pushed). Without `-n`, it fetches commits FROM the latest tag to HEAD.
+Use this when:
+
+- You already created a tag with [`nyron push-tag`](/docs/commands/push-tag)
+- You are running in CI/CD after pushing the tag locally
+- You want local control over when the release boundary is created
+
+When using `--use-existing-tag`, Nyron fetches commits **between** the previous boundary tag and the latest one. Without it, Nyron fetches commits **since** the latest boundary tag and then creates the next boundary tag after publishing.
 
 ```bash
-npx @nyron/cli release -n
+npx @nyron/cli release --use-existing-tag
 ```
 
-**Example: Using with push-tag**
+## Local Preview vs GitHub Publishing
+
+- `--dry-run` works from local git history and does **not** require `GITHUB_TOKEN`
+- Publishing a GitHub release **does** require `GITHUB_TOKEN`
+
+## Example: Using with push-tag
 
 ```bash
-# Create GPG-signed tag locally
+# Create or push a release boundary tag locally
 npx @nyron/cli push-tag
 
-# Create release without creating another tag
-# This will use commits BETWEEN the previous tag and the tag you just pushed
-npx @nyron/cli release -n
+# Publish the GitHub release for that boundary
+npx @nyron/cli release --use-existing-tag
 ```
 
 ## How It Works
 
 The `release` command works by:
 
-1. **Determining which tags to use** - Finds the latest nyron-release tag (and previous tag if using `-n` flag)
-2. **Fetching commits** - Gets commits between tags (with `-n`) or from latest tag to HEAD (without `-n`)
+1. **Determining which tags to use** - Finds the latest Nyron release boundary tag
+2. **Fetching commits** - Gets commits between tags (with `--use-existing-tag`) or from the latest tag to `HEAD`
 3. **Parsing conventional commits** - Extracts features, fixes, and other changes
 4. **Reading version information** - Loads version data from the .nyron/ directory
 5. **Generating a changelog** - Creates markdown changelog from parsed commits
-6. **Creating a GitHub release** - Publishes the release with the changelog as the description
-7. **Creating a new nyron-release tag** - Only when running without `-n` flag and not in dry-run mode. This tag marks the boundary for the NEXT release.
+6. **Creating a GitHub release** - Only when not using `--dry-run`
+7. **Creating the next boundary tag** - Only when publishing without `--use-existing-tag`
 
 ## Prerequisites
 
-- **Required:** A `GITHUB_TOKEN` environment variable must be set
-- **Required:** At least one nyron-release tag must exist (created by `push-tag`)
+- **Required for publishing:** A `GITHUB_TOKEN` environment variable must be set
+- **Required:** At least one `nyron-release@*` tag must exist
 - **Required:** Commits must follow [conventional commit format](/docs/guides/conventional-commits)
 
 ## What It Does
@@ -85,12 +92,12 @@ The release command:
 - Uses an auto-generated changelog as the release description
 - Groups commits by type (Features, Bug Fixes, Chores, etc.)
 - Includes author information and commit links
-- **Creates a new nyron-release tag** (only without `-n` flag) - This tag is created AFTER the release and marks the boundary for the NEXT release, not the current one
+- **Creates a new nyron-release tag** (only without `--use-existing-tag`) - This tag is created after publishing and marks the boundary for the next release
 
 ### Tag Creation Behavior
 
-- **Without `-n` flag**: Creates a new nyron-release tag AFTER the release is published. This tag marks where the NEXT release will start from.
-- **With `-n` flag**: Does NOT create a new tag. Uses the existing tag you pushed with `push-tag` command.
+- **Without `--use-existing-tag`**: Creates a new Nyron release tag after publishing. This marks where the next release will start from.
+- **With `--use-existing-tag`**: Does **not** create a new tag. Uses the tag you already pushed.
 - **Dry-run mode**: Does NOT create a tag (or release), only previews what would be created.
 
 ## Examples
@@ -125,7 +132,6 @@ Sample output:
 ✓ Changelog generated (1,234 characters)
 
 📍 Step 6: Preview (DRY RUN - no release created)
-📍 Step 7: (Skipped in dry-run mode - would create new nyron-release tag)
 ================================================================================
 ## Features
 - **api**: add OAuth2 login ([@username](https://github.com/username)) [[a1b2c3d](https://github.com/owner/repo/commit/a1b2c3d)]
@@ -144,22 +150,21 @@ Sample output:
 The `release` command is typically used as the final step:
 
 ```bash
-# 1. Bump version and generate changelog
-npx @nyron/cli bump --type minor --prefix v
+# 1. Bump version
+npx @nyron/cli bump --type minor
 
 # 2. Commit changes
 git add .
 git commit -m "chore: bump version to 1.2.0"
 
-# 3. Create and push nyron-release tag
+# 3. Create and push a nyron-release tag
 npx @nyron/cli push-tag
 
-# 4. Create GitHub release (use -n since tag already exists)
-# This creates the release and does NOT create another tag
-npx @nyron/cli release -n
+# 4. Create GitHub release for that boundary
+npx @nyron/cli release --use-existing-tag
 ```
 
-**Note**: If you run `release` without `-n` after pushing a tag, it will create a duplicate tag. Always use `-n` when you've already pushed a tag with `push-tag`.
+Always use `--use-existing-tag` when you have already pushed a boundary tag with `push-tag`.
 
 ### Automated Workflow (Recommended)
 
@@ -167,7 +172,7 @@ Alternatively, set up a GitHub Actions workflow to automatically run the `releas
 
 ```bash
 # 1. Bump and commit
-npx @nyron/cli bump --type minor --prefix v
+npx @nyron/cli bump --type minor
 git add . && git commit -m "chore: bump version to 1.2.0"
 
 # 2. Push tag (triggers automated release)
@@ -176,7 +181,7 @@ npx @nyron/cli push-tag
 # ✨ The GitHub release is created automatically by CI/CD!
 ```
 
-This workflow requires a `.github/workflows/release.yml` file in your repository. See the [automated workflow guide](/docs/guides/workflow#automated-release-workflow) for setup instructions.
+This workflow requires a `.github/workflows/release.yml` file in your repository. See the [workflow guide](/docs/guides/workflow#automated-release-workflow) for setup instructions.
 
 ## Error Handling
 
@@ -195,9 +200,9 @@ This means there are no new commits since the last release.
 
 **Missing GitHub token:**
 ```
-Error: GITHUB_TOKEN environment variable is required
+Publishing a GitHub release requires GITHUB_TOKEN
 ```
-Set your GitHub token in a `.env` file or environment variable.
+Set your GitHub token in a `.env` file or environment variable, or run `nyron release --dry-run` to preview locally.
 
 ## Next Steps
 

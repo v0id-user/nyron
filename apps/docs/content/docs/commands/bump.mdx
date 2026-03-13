@@ -5,12 +5,12 @@ description: Bump project version and generate changelog
 
 # nyron bump
 
-Bump project version and generate changelog automatically.
+Bump a configured project version.
 
 ## Usage
 
 ```bash
-npx @nyron/cli bump --type <type> --prefix <prefix>
+npx @nyron/cli bump --type <type> [--project <project>]
 ```
 
 ## Required Options
@@ -25,82 +25,68 @@ npx @nyron/cli bump --type <type> --prefix <prefix>
 - `patch` - For bug fixes (e.g., 1.0.0 → 1.0.1)
 
 ```bash
-npx @nyron/cli bump --type minor --prefix v
+npx @nyron/cli bump --type minor
 ```
 
-### `-x, --prefix <prefix>`
+### `-p, --project <project>`
 
-**Required.** Tag prefix from your configuration file.
+Optional project id/key from your `nyron.config.ts`.
 
-For single packages:
+If your config contains exactly one project, you can omit this flag:
+
 ```bash
-npx @nyron/cli bump --type minor --prefix v
+npx @nyron/cli bump --type minor
 ```
 
-For monorepo packages:
+For multi-project repositories:
+
 ```bash
-npx @nyron/cli bump --type patch --prefix @myapp/api@
+npx @nyron/cli bump --type patch --project api
 ```
 
 ## What It Does
 
 When you run `nyron bump`, it performs the following steps:
 
-1. **Increments the version** in `.nyron/meta.json` for the specified package prefix
-2. **Records the version** in `.nyron/versions.json` to track version history
-3. **Updates `package.json`** version in the project directory to match the new version
-4. **Synchronizes** version information across all three files to ensure consistency
+1. **Chooses the target project** from `nyron.config.ts`
+2. **Increments the version** in `.nyron/meta.json` for the selected project
+3. **Records the version transition** in `.nyron/versions.json`
+4. **Updates `package.json`** in the project directory to match the new version
 
-The command coordinates between the meta version system (`.nyron/meta.json`) and the versions tracking system (`.nyron/versions.json`) to ensure consistency across your monorepo, then updates the actual `package.json` file with the new version.
+Nyron uses the project key from `nyron.config.ts`, not the tag prefix, when selecting which project to bump.
 
 ## Examples
 
-### Bump a minor version
+### Bump the only configured project
 
 ```bash
-npx @nyron/cli bump --type minor --prefix v
+npx @nyron/cli bump --type minor
 ```
 
-This will:
-- Change version from `1.0.0` to `1.1.0`
-- Update `.nyron/meta.json` with the new version
-- Add the new version to `.nyron/versions.json` history
-- Update `package.json` in the project directory
-
-### Bump a patch version for a monorepo package
+### Bump a specific project in a monorepo
 
 ```bash
-npx @nyron/cli bump --type patch --prefix @workspace/api@
+npx @nyron/cli bump --type patch --project api
 ```
 
-### Bump a major version (breaking changes)
+### Bump a major version
 
 ```bash
-npx @nyron/cli bump --type major --prefix v
+npx @nyron/cli bump --type major --project cli
 ```
-
-## Changelog Generation
-
-The changelog is automatically generated based on your commit history. It groups commits into:
-
-- **Features** - New features (`feat:` commits)
-- **Bug Fixes** - Bug fixes (`fix:` commits)
-- **Chores** - Maintenance tasks (`chore:`, `docs:`, `refactor:`, etc.)
-
-Learn more about [how Nyron works](/docs/guides/how-it-works).
 
 ## After Bumping
 
-After running `bump`, you should:
+After running `bump`, you should usually:
 
-1. Review the generated changelog
-2. Commit the changes:
+1. Review the version change
+2. Commit the updated `package.json` and `.nyron/` files:
    ```bash
    git add .
    git commit -m "chore: bump version to x.y.z"
    ```
-3. Create a tag using [`nyron tag`](/docs/commands/tag)
-4. Push your changes and tags
+3. Mark a release boundary with [`nyron push-tag`](/docs/commands/push-tag)
+4. Preview or publish release notes with [`nyron release`](/docs/commands/release)
 
 See the full [workflow guide](/docs/guides/workflow) for details.
 

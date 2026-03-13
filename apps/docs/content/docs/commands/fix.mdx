@@ -5,7 +5,7 @@ description: Validate and repair your Nyron setup
 
 # nyron fix
 
-Validate and repair inconsistencies in your Nyron setup by checking configuration, metadata, and package files.
+Validate and repair your Nyron setup by synchronizing config, package versions, and `.nyron` metadata.
 
 ## Usage
 
@@ -13,53 +13,27 @@ Validate and repair inconsistencies in your Nyron setup by checking configuratio
 npx @nyron/cli fix
 ```
 
-This command scans your entire Nyron setup and automatically fixes most issues, prompting you only when manual intervention is needed.
+This command is safe to run whenever your configuration or metadata drift out of sync.
 
 ## What It Does
 
-The `fix` command performs a comprehensive validation of your Nyron setup in four phases:
+The `fix` command:
 
-### Phase 1: Detection
-
-Scans for issues across your setup:
-
-- **Path validation** - Checks if project directories exist
-- **package.json validation** - Verifies all projects have valid package.json with required `version` field
-- **Orphaned packages** - Finds packages in `meta.json` or `versions.json` that aren't in your config
-- **Missing packages** - Finds packages in config that aren't in metadata files
-- **Version mismatches** - Detects when package.json versions differ from meta.json versions
-- **Latest release tag** - Checks if the Nyron release tag in meta.json matches the latest tag in git
-
-### Phase 2: Auto-fix
-
-Automatically fixes issues without prompting:
-
-- **Removes orphaned packages** from `meta.json` and `versions.json` (config is source of truth)
-- **Adds missing packages** to `meta.json` and `versions.json` with their current versions
-- **Syncs version mismatches** from `package.json` to `meta.json` (package.json is source of truth)
-- **Updates latest Nyron release tag** in `meta.json` from git tags (keeps track of your latest release)
-
-### Phase 3: Prompt for Path Issues
-
-Asks for your input on filesystem issues:
-
-- **Missing directories** - Prompts to create missing project directories with package.json
-- **Missing package.json** - Prompts to create package.json with version 0.0.0
-- **Invalid package.json** - Prompts to add missing `version` field
-
-### Phase 4: Report
-
-Shows a comprehensive summary of all fixes applied.
+- Creates missing `.nyron/meta.json` and `.nyron/versions.json` files
+- Synchronizes `.nyron` metadata with `nyron.config.ts`
+- Uses each project's `package.json` version as the source of truth
+- Prompts you to create missing project directories or `package.json` files when needed
+- Updates the stored latest Nyron release tag when one exists in git
 
 ## When to Use
 
 Run `nyron fix` when:
 
 - You've manually edited `nyron.config.ts` and added/removed projects
-- You suspect inconsistencies between your config and metadata files
+- You suspect inconsistencies between config and metadata files
 - You're getting errors from other Nyron commands
 - You've manually modified package versions
-- You're setting up an existing project with Nyron
+- `.nyron/` is missing and you want to repair the setup without rerunning `init`
 
 ## Example Output
 
@@ -70,24 +44,16 @@ $ npx @nyron/cli fix
 
 🔧 Auto-fixing issues...
 
-⚠️  Path "packages/new-package" for project "new-package" doesn't exist.
-Create directory with package.json? (y/n): y
-
 ============================================================
 📋 Fix Summary
 ============================================================
 
 Applied fixes:
 
-  1. Removed orphaned package "old-api" from meta.json
-  2. Removed orphaned package "old-api" from versions.json
-  3. Added missing package "new-package" to meta.json with version 0.0.0
-  4. Added missing package "new-package" to versions.json with version 0.0.0
-  5. Synced version for "cli": 1.0.0 → 1.1.0
-  6. Updated latest Nyron release tag: (not set) → nyron-release@2024-10-13@12-30-45.678
-  7. Created directory and package.json for "new-package" at packages/new-package
+  1. Created missing .nyron metadata files
+  2. Synchronized .nyron metadata with nyron.config.ts and package.json versions
 
-✅ Total: 7 fix(es) applied.
+✅ Total: 2 fix(es) applied.
 ```
 
 ## No Issues Found
@@ -100,14 +66,12 @@ If everything is in good shape, you'll see:
 ✅ No issues found! Your Nyron setup is in good shape.
 ```
 
-## Configuration as Source of Truth
+## Source of Truth
 
-The `fix` command treats your `nyron.config.ts` as the single source of truth:
+Nyron treats:
 
-- If a package exists in config → it's added to metadata files
-- If a package doesn't exist in config → it's removed from metadata files
-
-For version conflicts, `package.json` is the source of truth and metadata is synced to match it.
+- `nyron.config.ts` as the source of truth for which projects exist
+- each project's `package.json` as the source of truth for its current version
 
 ## Nyron Release Tag Sync
 
@@ -123,10 +87,10 @@ This tag is used internally to track releases and generate changelogs between ve
 
 ## Best Practices
 
-1. **Run after config changes** - Always run `fix` after editing `nyron.config.ts`
-2. **Commit metadata changes** - After fixing, commit the updated `.nyron/` files
-3. **Review before accepting** - Read the fix summary to understand what changed
-4. **Safe to run anytime** - The command is non-destructive and prompts before creating files
+1. **Run after config changes** - Use `fix` after editing `nyron.config.ts`
+2. **Commit metadata changes** - Commit the updated `.nyron/` files after fixing
+3. **Review the summary** - Read the fix summary to understand what changed
+4. **Safe to rerun** - The command is idempotent and safe to run multiple times
 
 ## Related Commands
 

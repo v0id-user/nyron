@@ -14,27 +14,27 @@ export const changelogTemplate = `
 ## Updated packages
 
 {{#each versions}}
-- {{this}}
+- {{{this}}}
 {{/each}}
 
 {{#if features}}
 ### ✨ Features
 {{#each features}}
-- {{this}}
+- {{{this}}}
 {{/each}}
 {{/if}}
 
 {{#if fixes}}
 ### 🐛 Fixes
 {{#each fixes}}
-- {{this}}
+- {{{this}}}
 {{/each}}
 {{/if}}
 
 {{#if chores}}
 ### 🧹 Chores
 {{#each chores}}
-- {{this}}
+- {{{this}}}
 {{/each}}
 {{/if}}
 
