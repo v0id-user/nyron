@@ -4,52 +4,63 @@ type RepoContext = {
   owner: string;
   repo: string;
   headSha?: string;
+  baseSha?: string;
 };
 
 export function buildProjectChangesComment(
   projectChanges: Array<ProjectChange>,
   repo: RepoContext
 ): string {
-  const header = "## Folder changes analysis\n\n";
+  const impacted = projectChanges.filter((p) => p.impacted);
+  const notImpacted = projectChanges.filter((p) => !p.impacted);
 
-  // Summary table
-  const tableHeader = "| Project | Latest tag | Changed folders |\n|---|---|---|\n";
+  const header = "## Nyron project impact\n\n";
+  const subheader =
+    "This analysis shows which configured Nyron projects are touched by this PR.\n\n";
+
+  const tableHeader =
+    "| Project | Path | Impacted | Changed folders |\n|---|---|---|---|\n";
   const tableRows = projectChanges
-    .map(({ projectName, latestTag, changedFolders }) => {
-      const tag = latestTag ? `\`${latestTag}\`` : "No tag";
-      const changed = changedFolders && changedFolders.length > 0 ? String(changedFolders.length) : "0";
-      return `| ${projectName} | ${tag} | ${changed} |`;
+    .map(({ projectName, path, impacted: imp, changedFolders }) => {
+      const status = imp ? "Yes" : "No";
+      const count =
+        changedFolders.length > 0 ? String(changedFolders.length) : "—";
+      return `| ${projectName} | \`${path}\` | ${status} | ${count} |`;
     })
     .join("\n");
 
-  const sections = projectChanges
-    .map(({ projectName, latestTag, changedFolders }) => {
-      const title = `\n<details>\n<summary><strong>${projectName}</strong></summary>\n\n`;
+  let sections = "";
+  if (impacted.length > 0) {
+    sections += "### Impacted projects\n\n";
+    sections += impacted
+      .map(({ projectName, path, changedFolders }) => {
+        const title = `**${projectName}** (\`${path}\`)\n`;
+        const folders =
+          changedFolders.length > 0
+            ? `Changed folders:\n${changedFolders.map((f) => `- \`${f}\``).join("\n")}\n`
+            : "";
+        const action = `\n**Suggested action:** Run \`nyron bump --project ${projectName}\` (or \`--type patch|minor|major\`) to version and release.\n`;
+        return title + folders + action;
+      })
+      .join("\n\n");
+  }
 
-      let body = "";
-      if (latestTag) {
-        body += `Latest tag: \`${latestTag}\`\n`;
-        if (repo.headSha) {
-          body += `[Compare](/${repo.owner}/${repo.repo}/compare/${latestTag}...${repo.headSha})\n`;
-        }
-        if (changedFolders.length > 0) {
-          body += `\nChanged folders:\n${changedFolders.map((f) => `- \`${f}\``).join("\n")}\n`;
-        } else {
-          body += `\nNo folder changes detected since last release\n`;
-        }
-      } else {
-        body += `Latest tag: No tags found with prefix\n`;
-        body += `Cannot determine changes without a baseline tag\n`;
-      }
+  if (notImpacted.length > 0) {
+    sections += "\n### Unchanged projects\n\n";
+    sections += notImpacted
+      .map(({ projectName, path }) => `- **${projectName}** (\`${path}\`)`)
+      .join("\n");
+    sections += "\n";
+  }
 
-      const footer = "\n</details>\n";
-      return title + body + footer;
-    })
-    .join("\n");
+  if (repo.baseSha && repo.headSha) {
+    sections += `\n[Compare changes](/${repo.owner}/${repo.repo}/compare/${repo.baseSha}...${repo.headSha})\n`;
+  }
 
-  const note = "\n---\nThis analysis compares the pull request against the latest tags for each project. Projects without tags cannot be compared to a baseline.";
+  const note =
+    "\n---\n*Analysis compares this PR's commits (base → head) and maps changed paths to configured Nyron projects.*";
 
-  return header + tableHeader + tableRows + "\n" + sections + note;
+  return header + subheader + tableHeader + tableRows + "\n\n" + sections + note;
 }
 
 
