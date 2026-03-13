@@ -18,6 +18,7 @@ export default defineConfig({
     // GitHub helpers
     "github/commits": "./src/github/commits.ts",
     "github/repo-parser": "./src/github/repo-parser.ts",
+    "github/tags": "./src/github/tags.ts",
     "github/types": "./src/github/types.ts",
     // Git helpers
     "core/tag-parser": "./src/core/tag-parser.ts",

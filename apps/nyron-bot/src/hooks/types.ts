@@ -1,7 +1,8 @@
 export interface ProjectChange {
-    projectName: string;
-    latestTag: string | null;
-    changedFolders: string[];
-    hasChanges: boolean;
-  }
+  projectName: string;
+  path: string;
+  impacted: boolean;
+  changedFolders: string[];
+  tagPrefix: string;
+}
   

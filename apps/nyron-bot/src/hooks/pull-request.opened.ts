@@ -10,6 +10,7 @@ export async function pullRequestOpened(context: Context<"pull_request">) {
   const commentBody = buildProjectChangesComment(projectChanges, {
     owner: pr.owner,
     repo: pr.repo,
+    baseSha: context.payload.pull_request.base.sha,
     headSha: context.payload.pull_request.head.sha,
   });
   
