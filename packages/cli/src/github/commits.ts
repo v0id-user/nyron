@@ -4,7 +4,24 @@
 // etc...
 
 import { parseRepo } from "./repo-parser"
-import { resolveOctokit, type CommitDiff } from "./types"
+import { hasGitHubToken, resolveOctokit, type CommitDiff } from "./types"
+import { getGitCommitsBetween, getGitCommitsSince } from "../git/commits"
+
+function toAffectedFolders(files: string[]): string[] {
+  return files
+    .filter(Boolean)
+    .map((filename) => {
+      const parts = filename.split("/")
+
+      if (parts.length === 1) {
+        return parts[0]
+      }
+
+      return parts.slice(0, 2).join("/")
+    })
+    .sort()
+    .filter((folder, index, all) => folder !== all[index - 1])
+}
 
 async function fetchCommitsFromComparison(
   base: string,
@@ -12,6 +29,10 @@ async function fetchCommitsFromComparison(
   repo: string,
   clientOrContext?: unknown
 ): Promise<CommitDiff[]> {
+  if (!clientOrContext && !hasGitHubToken()) {
+    return getGitCommitsBetween(base, head, repo)
+  }
+
   const { owner, repo: repoName } = parseRepo(repo)
   const octokit = resolveOctokit(clientOrContext as any)
 
@@ -42,20 +63,10 @@ async function fetchCommitsFromComparison(
     const authorEmail = commit.commit.author?.email || "unknown";
     const gitFormatAuthor = `${authorName} <${authorEmail}>`;
 
-    // Extract affected folders using the same mechanism as in diff.ts
-    const affectedFolders = (commit.files || [])
+    const affectedFolders = toAffectedFolders((commit.files || [])
       .map((file) => file.filename)
       .filter((f): f is string => Boolean(f))
-      .map((filename) => {
-        const parts = filename.split("/");
-        // If file is at root, return the file itself as the "folder"
-        if (parts.length === 1) return parts[0];
-        // Otherwise, return the top-level folder (or top two levels for monorepos, etc.)
-        return parts.slice(0, 2).join("/");
-      })
-      .filter((f): f is string => Boolean(f))
-      .sort()
-      .filter((folder, idx, arr) => idx === 0 || folder !== arr[idx - 1]);
+    )
 
     return {
       hash: commit.sha,
@@ -75,5 +86,9 @@ export async function getCommitsBetween(fromTag: string, toTag: string, repo: st
 }
 
 export async function getCommitsSince(releaseTag: string, repo: string, clientOrContext?: unknown): Promise<CommitDiff[]> {
+  if (!clientOrContext && !hasGitHubToken()) {
+    return getGitCommitsSince(releaseTag, repo)
+  }
+
   return getCommitsBetween(releaseTag, "HEAD", repo, clientOrContext)
 }
