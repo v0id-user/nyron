@@ -15,12 +15,12 @@ Nyron follows a systematic 7-step approach to generate your changelogs and creat
 
 Nyron determines which `nyron-release@*` tags to use based on the mode:
 
-**Mode 1: New Tag Release (with `-n` flag)**
+**Mode 1: Existing Tag Release (with `--use-existing-tag`)**
 - Finds the latest tag (the one you just pushed with `push-tag`)
 - Finds the previous tag to compare against
 - Used when a nyron-release tag was just created and pushed
 
-**Mode 2: Standard Release (without `-n` flag)**
+**Mode 2: Standard Release (without `--use-existing-tag`)**
 - Finds the latest `nyron-release@*` tag
 - Uses that tag as the starting point
 - Used for creating a release from existing state
@@ -35,8 +35,8 @@ Nyron determines which `nyron-release@*` tags to use based on the mode:
 
 Nyron retrieves commits based on the tags discovered:
 
-- **With `-n` flag**: Fetches commits **BETWEEN** the previous tag and the latest tag using GitHub API
-- **Without `-n` flag**: Fetches commits from the latest tag to HEAD
+- **With `--use-existing-tag`**: Fetches commits **between** the previous tag and the latest tag
+- **Without `--use-existing-tag`**: Fetches commits from the latest tag to `HEAD`
 - If no commits are found, the release is skipped (nothing new to release)
 
 ### Step 3: Commit Parsing
@@ -62,7 +62,7 @@ Generates markdown changelog from parsed commits and version data:
 
 - Formats into sections: Breaking Changes, Features, Bug Fixes, Chores, etc.
 - Includes package version updates and commit details
-- Enriches with GitHub data (author usernames, avatars, commit URLs) if GitHub token is configured
+- Enriches with GitHub data (author usernames, avatars, commit URLs) if GitHub authentication is configured
 - Produces clean, readable markdown suitable for GitHub releases
 
 ### Step 6: GitHub Release Creation
@@ -70,13 +70,13 @@ Generates markdown changelog from parsed commits and version data:
 Creates the GitHub release:
 
 - **Dry Run**: Generates changelog and prints to console (no GitHub release created)
-- **Wet Run**: Creates actual GitHub release with the generated changelog as body
-- Uses the determined release tag (pushed tag with `-n`, latest tag without `-n`)
+- **Wet Run**: Creates the actual GitHub release with the generated changelog as body
+- Uses the determined release tag (pushed tag with `--use-existing-tag`, latest tag without it)
 - Publishes to the repository's releases page
 
 ### Step 7: Tag Creation (Next Release Boundary)
 
-**Only executed without `-n` flag and not in dry-run mode:**
+**Only executed without `--use-existing-tag` and not in dry-run mode:**
 
 - Creates a new `nyron-release@*` tag AFTER the release is published
 - Updates `meta.json` with the new tag
@@ -111,7 +111,7 @@ Nyron uses a dual-tag system that separates version tracking from release bounda
 - **Not used** as release boundaries
 
 ### Nyron-Release Tags (Release Boundaries)
-- Created by `nyron push-tag` command or `nyron release` command (without `-n` flag)
+- Created by `nyron push-tag` or `nyron release` (without `--use-existing-tag`)
 - Format: `nyron-release@2024-01-15@14-30-25.123`
 - Purpose: Mark release boundaries for GitHub releases
 - **Only these tags** determine which commits are included in releases
@@ -128,12 +128,12 @@ nyron-release@date1 ---- A ---- B ---- C ---- nyron-release@date2 ---- D ---- E 
 
 **Tag Creation Timing**:
 - **`nyron push-tag`**: Creates and pushes the tag immediately at the current HEAD
-- **`nyron release` (without `-n`)**: Creates a new tag AFTER the release is published. This tag marks the boundary for the NEXT release, not the current one.
-- **`nyron release` (with `-n`)**: Does NOT create a tag. Uses the existing tag you pushed with `push-tag` and fetches commits BETWEEN the previous tag and the tag you just pushed.
+- **`nyron release` (without `--use-existing-tag`)**: Creates a new tag after the release is published. This tag marks the boundary for the next release, not the current one.
+- **`nyron release --use-existing-tag`**: Does not create a tag. Uses the existing tag you pushed with `push-tag` and fetches commits between the previous tag and the tag you just pushed.
 
 ## Two Release Modes
 
-### Mode 1: New Tag Release (with `-n` flag)
+### Mode 1: Existing Tag Release (with `--use-existing-tag`)
 
 Used when a nyron-release tag was just created and pushed:
 
@@ -145,7 +145,7 @@ Used when a nyron-release tag was just created and pushed:
 
 **Use case**: You've already pushed a tag with `push-tag` and want to create a release for commits between the previous release and the tag you just pushed.
 
-### Mode 2: Standard Release (without `-n` flag)
+### Mode 2: Standard Release (without `--use-existing-tag`)
 
 Used for creating a release from existing state:
 
@@ -180,7 +180,7 @@ The GitHub integration provides rich context:
 - **Commit links**: Jump directly to the commit on GitHub
 - **Repository metadata**: Accurate project information
 
-While GitHub is currently required, support for other platforms is planned.
+GitHub is required when you publish a GitHub release. Local setup, version bumps, tag pushes, and `--dry-run` release previews can still work from local git history without GitHub authentication.
 
 ## Benefits
 

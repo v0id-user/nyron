@@ -5,7 +5,7 @@ description: Initialize Nyron configuration in your project
 
 # nyron init
 
-Initialize Nyron configuration in your project.
+Initialize Nyron in your project.
 
 ## Usage
 
@@ -13,7 +13,11 @@ Initialize Nyron configuration in your project.
 npx @nyron/cli init
 ```
 
-This command creates a `nyron.config.ts` file in your project root with default configuration settings.
+This command creates a usable first-run setup in your current project:
+
+- `nyron.config.ts`
+- `.nyron/meta.json`
+- `.nyron/versions.json`
 
 ## Options
 
@@ -25,21 +29,9 @@ Overwrite existing configuration file if one already exists.
 npx @nyron/cli init --force
 ```
 
-### `--json`
-
-Generate JSON config instead of TypeScript.
-
-```bash
-npx @nyron/cli init --json
-```
-
-<Callout type="info">
-JSON configuration support is coming soon.
-</Callout>
-
 ## What It Creates
 
-The command generates a configuration file with the following structure:
+Nyron detects your repository and package layout when possible. For a single-package repo, the generated config looks like this:
 
 ```ts
 import { defineConfig } from "@nyron/cli/config"
@@ -47,27 +39,23 @@ import { defineConfig } from "@nyron/cli/config"
 export default defineConfig({
   repo: "owner/repo",
   projects: {
-    sdk: {
-      tagPrefix: "@my-package/sdk@",
-      path: "packages/sdk",
-    },
-    service: {
-      tagPrefix: "@my-package/service@",
-      path: "apps/service",
+    main: {
+      tagPrefix: "v",
+      path: ".",
     },
   },
-  autoChangelog: true,
-  onPushReminder: true,
 })
 ```
 
-Make sure to edit this file to match your actual repository structure and project names.
+For monorepos, Nyron creates one project entry per discovered workspace package.
+
+After writing the config, Nyron synchronizes `.nyron/meta.json` and `.nyron/versions.json` using the discovered project versions so you can use `nyron bump` immediately.
 
 ## Next Steps
 
 After initialization:
 
-1. Edit the `nyron.config.ts` file to match your project structure
-2. Set up a [GitHub token](/docs/getting-started/quickstart#setup-github-token-optional-but-recommended) for enhanced changelogs
-3. Run [`nyron diff`](/docs/commands/diff) to see your recent commits
+1. Review and adjust `nyron.config.ts` if the detected projects need tweaking
+2. Run [`nyron bump`](/docs/commands/bump) to update a version
+3. Run [`nyron push-tag`](/docs/commands/push-tag) when you are ready to mark a release boundary
 

@@ -134,7 +134,7 @@ For best results, ensure all commits follow the conventional format.
 
 Nyron determines which commits to include in a release based on `nyron-release@*` tags:
 
-- **Commits between tags** (when using `-n` flag): Includes all commits between the previous `nyron-release@*` tag and the latest one
+- **Commits between tags** (when using `--use-existing-tag`): Includes all commits between the previous `nyron-release@*` tag and the latest one
 - **Commits since last tag** (default): Includes all commits from the latest `nyron-release@*` tag to HEAD
 
 Only commits that fall within these boundaries are parsed and included in the changelog. Your existing version tags (like `v1.0.0`) don't affect which commits are included - only `nyron-release@*` tags matter for release boundaries.
@@ -221,5 +221,5 @@ The `#number` format creates clickable links in GitHub that navigate directly to
 
 - Learn [how Nyron works](/docs/guides/how-it-works) with these commits
 - See a typical [versioning workflow](/docs/guides/workflow)
-- Start using the [`diff` command](/docs/commands/diff) to preview your commits
+- Start using [`nyron release --dry-run`](/docs/commands/release) to preview release notes from your local git history
 

@@ -62,7 +62,7 @@
  */
 
 import { loadConfig } from "../config"
-import { parseCommits } from "../core/commits-parser"
+import { filterMetaCommits, parseCommits } from "../core/commits-parser"
 import { getLatestNyronReleaseTag, getPreviousLatestNyronReleaseTag } from "../git/tags"
 import { getCommitsSince, getCommitsBetween } from "../github/commits"
 import type { ReleaseOptions } from "./types"
@@ -71,6 +71,8 @@ import { getUpdatedVersions } from "../nyron/version"
 import { createRelease } from "../github/release"
 import { pushNyronReleaseTag } from "../github/tags"
 import { setMetaLatestTag } from "../nyron/meta/writer"
+import { CliError } from "../core/errors"
+import { hasGitHubToken } from "../github/types"
 
 /**
  * Creates a GitHub release with an auto-generated changelog.
@@ -104,26 +106,35 @@ export const release = async (options: ReleaseOptions) => {
     let fromTag: string | null = null
     let releaseTag: string | null = null
     
-    if (options.newTag) {
-      console.log(`[nyron] -> Creating release for newly pushed tag`)
+    if (options.useExistingTag) {
+      console.log(`[nyron] -> Using the latest pushed Nyron release tag`)
       // Get the latest tag (the one just pushed)
       releaseTag = await getLatestNyronReleaseTag()
       if (!releaseTag) {
-        throw new Error(`No nyron release tag found\n   → Make sure to push the tag with nyron tool`)
+        throw new CliError("No Nyron release tag found", {
+          details: ["Run 'nyron push-tag' before using --use-existing-tag."],
+        })
       }
       console.log(`✓ Release tag: ${releaseTag}`)
       
       // Get the previous tag to compare against
       fromTag = await getPreviousLatestNyronReleaseTag()
       if (!fromTag) {
-        throw new Error(`No previous nyron release tag found\n   → Cannot create release for first tag`)
+        throw new CliError("No previous Nyron release tag found", {
+          details: [
+            "Cannot build an existing-tag release from a single release boundary.",
+            "Create a new release without --use-existing-tag, or push another boundary tag first.",
+          ],
+        })
       }
       console.log(`✓ Previous tag: ${fromTag}`)
     } else {
       console.log('[nyron] -> Using the latest existing release tag')
       fromTag = await getLatestNyronReleaseTag()
       if (!fromTag) {
-        throw new Error(`No nyron release tag found\n   → Make sure to push the tag with nyron tool`)
+        throw new CliError("No Nyron release tag found", {
+          details: ["Run 'nyron push-tag' to create the first release boundary."],
+        })
       }
       releaseTag = fromTag
       console.log(`✓ Found tag: ${fromTag}`)
@@ -131,20 +142,24 @@ export const release = async (options: ReleaseOptions) => {
 
     // Step 2: Get commits between tags
     console.log('\n📍 Step 2: Fetching commits...')
-    const commits = options.newTag 
+    const commits = options.useExistingTag 
       ? await getCommitsBetween(fromTag!, releaseTag!, config.repo)
       : await getCommitsSince(fromTag, config.repo)
-    if (commits.length === 0) {
-      const tagRange = options.newTag 
+    const releaseCommits = filterMetaCommits(commits)
+
+    if (releaseCommits.length === 0) {
+      const tagRange = options.useExistingTag 
         ? `between ${fromTag} and ${releaseTag}`
         : `since ${fromTag}`
-      throw new Error(`No commits found ${tagRange}\n   → Cannot create a release without commits`)
+      throw new CliError("No release-worthy commits found", {
+        details: [`Checked commits ${tagRange}.`],
+      })
     }
-    console.log(`✓ Found ${commits.length} commit(s)`)
+    console.log(`✓ Found ${releaseCommits.length} commit(s)`)
   
     // Step 3: Parse commits into structured groups
     console.log('\n📍 Step 3: Parsing commits...')
-    const parsedCommits = parseCommits(commits)
+    const parsedCommits = parseCommits(releaseCommits)
     console.log(`✓ Parsed commits into groups (features, fixes, etc.)`)
 
     // Step 4: Extract versions from meta.json
@@ -167,6 +182,15 @@ export const release = async (options: ReleaseOptions) => {
       console.log('✅ Dry run completed - no release was created\n')
       return
     } else {
+      if (!hasGitHubToken()) {
+        throw new CliError("Publishing a GitHub release requires GITHUB_TOKEN", {
+          details: [
+            "Set GITHUB_TOKEN and rerun the command to publish.",
+            "Tip: run 'nyron release --dry-run' to preview release notes locally.",
+          ],
+        })
+      }
+
       console.log('\n📍 Step 6: Creating GitHub release...')
       await createRelease(config.repo, releaseTag!, changelog)
       console.log(`✅ Release created successfully!\n`)

@@ -20,41 +20,77 @@ import { loadConfig } from "../config/loader";
 import { readMeta } from "../nyron/meta/reader";
 import { writePackageVersion } from "../package/write";
 import { resolve } from "path";
+import { CliError } from "../core/errors";
+
+function resolveProjectId(
+  requestedProject: string | undefined,
+  projectIds: string[],
+): string {
+  if (requestedProject) {
+    if (!projectIds.includes(requestedProject)) {
+      throw new CliError(`Unknown project "${requestedProject}"`, {
+        details: [
+          `Configured projects: ${projectIds.join(", ")}`,
+          "Use the project key from nyron.config.ts.",
+        ],
+      })
+    }
+
+    return requestedProject
+  }
+
+  if (projectIds.length === 1 && projectIds[0]) {
+    return projectIds[0]
+  }
+
+  throw new CliError("Project selection is required", {
+    details: [
+      "This config contains multiple projects.",
+      `Choose one with --project <id>: ${projectIds.join(", ")}`,
+    ],
+  })
+}
 
 export const bump = async (options: BumpOptions): Promise<BumpResult> => {
   try {
-     // Bump the version in meta and versions tracking
-     await syncincrementVersion(options.prefix, options.type)
-     
-     // Load config to get the project path
      const { config } = await loadConfig()
-     const projectConfig = config.projects[options.prefix]
-     
+     const projectId = resolveProjectId(options.project, Object.keys(config.projects))
+     const projectConfig = config.projects[projectId]
+
      if (!projectConfig) {
-       throw new Error(`Project "${options.prefix}" not found in config`)
+       throw new CliError(`Project "${projectId}" not found in config`)
      }
-     
+
+     // Bump the version in meta and versions tracking
+     await syncincrementVersion(projectId, options.type)
+
      // Read the updated meta to get the new version
      const meta = await readMeta()
-     const metaPackage = meta.packages.find(p => p.prefix === options.prefix)
-     
+     const metaPackage = meta.packages.find(p => p.prefix === projectId)
+
      if (!metaPackage) {
-       throw new Error(`Package "${options.prefix}" not found in meta`)
+       throw new CliError(`Project "${projectId}" not found in Nyron metadata`)
      }
-     
+
      // Update the package.json with the new version
      const fullPath = resolve(process.cwd(), projectConfig.path)
      writePackageVersion(fullPath, metaPackage.version)
-     
+
+     console.log(`✅ Bumped ${projectId} to ${metaPackage.version}`)
+
      return {
       success: true,
-      prefix: options.prefix,
+      project: projectId,
+      newVersion: metaPackage.version,
      }
   } catch (error) {
-    console.error(`\n❌ Bump failed:\n${error instanceof Error ? error.message : String(error)}`)
-    return {
-      success: false,
-      prefix: options.prefix,
+    if (error instanceof CliError) {
+      throw error
     }
+
+    throw new CliError("Bump failed", {
+      details: [error instanceof Error ? error.message : String(error)],
+      cause: error,
+    })
   }
 }

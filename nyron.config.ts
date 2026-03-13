@@ -8,6 +8,4 @@ export default defineConfig({
       path: "packages/cli",
     },
   },
-  autoChangelog: false,
-  onPushReminder: false,
 })

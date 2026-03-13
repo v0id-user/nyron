@@ -15,7 +15,9 @@ Run the initialization command to create a configuration file:
 npx @nyron/cli init
 ```
 
-This creates a `nyron.config.ts` file in your project root with the following structure:
+This creates a `nyron.config.ts` file plus `.nyron/meta.json` and `.nyron/versions.json`.
+
+For a single-package repository, the generated config looks like this:
 
 ```ts
 import { defineConfig } from "@nyron/cli/config"
@@ -23,21 +25,17 @@ import { defineConfig } from "@nyron/cli/config"
 export default defineConfig({
   repo: "owner/repo", // Your GitHub repo
   projects: {
-    sdk: {
-      tagPrefix: "@my-package/sdk@",
-      path: "packages/sdk",
-    },
-    service: {
-      tagPrefix: "@my-package/service@",
-      path: "apps/service",
+    main: {
+      tagPrefix: "v",
+      path: ".",
     },
   },
-  autoChangelog: true,
-  onPushReminder: true,
 })
 ```
 
-**Edit this file** to match your project structure.
+For monorepos, Nyron detects workspace packages and creates one project entry per package.
+
+**Review this file** and adjust it if needed.
 
 ### Single-Package Repository
 
@@ -54,14 +52,12 @@ export default defineConfig({
       path: ".",
     },
   },
-  autoChangelog: true,
-  onPushReminder: true,
 })
 ```
 
-## Setup GitHub Token (Required)
+## Setup GitHub Token (Required for Publishing)
 
-Nyron requires a GitHub token to function properly:
+You only need a GitHub token when you want to publish a GitHub release:
 
 ```bash
 # Create .env in your project root
@@ -77,8 +73,8 @@ Generate a token at [GitHub Settings → Developer settings → Personal access 
 - `repo:invite` (**Access repository invitations**)
 - `security_events` (**Read and write security events**)
 
-<Callout type="warn">
-A GitHub token is required for Nyron to access repository metadata, commit information, and create releases. Be sure to select all the permissions listed above. Without the correct permissions, Nyron will not work.
+<Callout type="info">
+You can still run `nyron init`, `nyron bump`, `nyron push-tag`, and `nyron release --dry-run` without `GITHUB_TOKEN`. GitHub authentication is required when you publish the release to GitHub.
 </Callout>
 
 ## Understanding Nyron Tags
@@ -119,7 +115,7 @@ For existing repositories, you need to establish a baseline nyron-release tag. T
 
 ```bash
 # First, bump your version (if needed)
-npx @nyron/cli bump --type minor --prefix v
+npx @nyron/cli bump --type minor
 
 # Commit the changes
 git add .
@@ -140,11 +136,11 @@ This creates your first `nyron-release@*` tag at the current HEAD. Future releas
 After pushing your first nyron-release tag, create a release:
 
 ```bash
-# Use -n flag since you already pushed the tag
-npx @nyron/cli release -n
+# Use --use-existing-tag since you already pushed the tag
+npx @nyron/cli release --use-existing-tag
 ```
 
-The `-n` flag tells Nyron to use the existing nyron-release tag you just pushed, rather than creating a new one.
+The `--use-existing-tag` flag tells Nyron to use the existing nyron-release tag you just pushed, rather than creating a new one.
 
 ## Start Using Nyron
 
@@ -155,8 +151,8 @@ Now you're ready to use Nyron! Here's the typical workflow:
 This workflow uses GPG-signed tags and separates tag creation from release creation:
 
 ```bash
-# 1. Bump version and auto-generate changelog
-npx @nyron/cli bump --type minor --prefix v
+# 1. Bump version
+npx @nyron/cli bump --type minor
 
 # 2. Commit your changes
 git add .
@@ -165,11 +161,11 @@ git commit -m "chore: bump version to 1.2.0"
 # 3. Create and push nyron-release tag (GPG-signed if configured)
 npx @nyron/cli push-tag
 
-# 4. Create GitHub release (use -n since tag already exists)
-npx @nyron/cli release -n
+# 4. Create GitHub release (use --use-existing-tag since tag already exists)
+npx @nyron/cli release --use-existing-tag
 ```
 
-**Why use `-n`?** The `-n` (or `--no-tag`) flag tells Nyron to use the nyron-release tag you just pushed with `push-tag`, rather than creating a duplicate tag. When using `-n`, the command fetches commits BETWEEN the previous tag and the tag you just pushed. This is especially important when:
+**Why use `--use-existing-tag`?** This flag tells Nyron to use the `nyron-release@*` tag you just pushed with `push-tag`, rather than creating another boundary tag. When using it, Nyron fetches commits between the previous boundary tag and the one you just pushed. This is especially useful when:
 - You want GPG-signed tags (created locally with `push-tag`)
 - You're using CI/CD workflows that trigger on tag pushes
 - You've already created a nyron-release tag manually
@@ -180,8 +176,8 @@ npx @nyron/cli release -n
 If you don't need GPG-signed tags, you can let `release` create the tag automatically:
 
 ```bash
-# 1. Bump version and auto-generate changelog
-npx @nyron/cli bump --type minor --prefix v
+# 1. Bump version
+npx @nyron/cli bump --type minor
 
 # 2. Commit your changes
 git add .
@@ -196,10 +192,10 @@ npx @nyron/cli release
 git push --follow-tags
 ```
 
-**Important**: When using `release` without `-n`, it creates a new nyron-release tag AFTER the release is published. This tag marks the boundary for the NEXT release. Make sure to push tags with `git push --follow-tags` or `git push && git push --tags`.
+**Important**: When using `release` without `--use-existing-tag`, it creates a new `nyron-release@*` tag after publishing. This tag marks the boundary for the next release. Make sure to push tags with `git push --follow-tags` or `git push && git push --tags`.
 
 <Callout type="info">
-**When to use `-n`**: Always use `-n` when you've already created a nyron-release tag (with `push-tag` or manually). Without `-n`, the `release` command will create a new nyron-release tag AFTER the release, which marks where the NEXT release will start from.
+**When to use `--use-existing-tag`**: Always use it when you've already created a `nyron-release@*` tag with `push-tag` or manually. Without it, `release` creates the next boundary tag after publishing.
 </Callout>
 
 ## Next Steps

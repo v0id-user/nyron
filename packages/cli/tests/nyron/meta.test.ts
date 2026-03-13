@@ -6,26 +6,25 @@ describe("MetaSchema", () => {
     const meta = MetaSchema.assert({
       packages: [
         {
-          name: "test",
+          prefix: "test",
           version: "1.0.0"
         }
       ],
-      createdAt: new Date(),
-      latestTag: "nyron-release@2021-01-01"
+      createdAt: "2026-01-01T00:00:00.000Z",
+      latestTag: "nyron-release@2026-01-01@00-00-00.000"
     })
     expect(meta).toBeDefined()
   })
 
-  it("should allow latestTag to be undefined", () => {
+  it("should allow latestTag to be omitted", () => {
     const meta = MetaSchema.assert({
       packages: [
         {
-          name: "projA",
+          prefix: "projA",
           version: "0.1.2"
         }
       ],
-      createdAt: new Date(),
-      latestTag: undefined
+      createdAt: "2026-01-01T00:00:00.000Z",
     })
     expect(meta).toBeDefined()
     expect(meta.latestTag).toBeUndefined()
@@ -36,12 +35,12 @@ describe("MetaSchema", () => {
       MetaSchema.assert({
         packages: [
           {
-            name: "bar",
+            prefix: "bar",
             version: "2.3.4"
           }
         ],
         // createdAt is missing
-        latestTag: "nyron-release@2023-12-15"
+        latestTag: "nyron-release@2026-01-01@00-00-00.000"
       })
     ).toThrow()
   })

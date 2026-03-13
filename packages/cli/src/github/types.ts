@@ -11,6 +11,10 @@ export type OctokitClientOrContext = Octokit | Pick<Context, "octokit"> | undefi
 
 let defaultOctokit: Octokit | null = null
 
+export function hasGitHubToken(): boolean {
+  return Boolean(process.env["GITHUB_TOKEN"])
+}
+
 function getDefaultOctokit(): Octokit {
   if (!defaultOctokit) {
     const token = process.env['GITHUB_TOKEN']
@@ -53,7 +57,7 @@ export interface CommitDiff {
   affectedFolders: string[]
   repo: string
   author: string
-  githubUser: string
+  githubUser?: string
   avatar?: string
   url?: string
 }

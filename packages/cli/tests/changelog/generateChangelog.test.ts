@@ -79,6 +79,10 @@ describe("generateChangelogMarkdown", () => {
     // Check chores
     expect(changelog).toContain("🧹 Chores")
     expect(changelog).toContain("update dependencies")
+    expect(changelog).toContain("[@dev1](https://github.com/dev1)")
+    expect(changelog).toContain("packages/docs, packages/core")
+    expect(changelog).not.toContain("&lt;")
+    expect(changelog).not.toContain("-&gt;")
   })
 })
 

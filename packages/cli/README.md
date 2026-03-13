@@ -29,7 +29,39 @@ npm install -D @nyron/cli
 npx @nyron/cli init
 ```
 
-### Setup GitHub Token
+This creates:
+
+- `nyron.config.ts`
+- `.nyron/meta.json`
+- `.nyron/versions.json`
+
+### Bump a Version
+
+```bash
+npx @nyron/cli bump --type minor
+# or, for multi-project repos
+npx @nyron/cli bump --type minor --project cli
+```
+
+### Create a Release Boundary
+
+```bash
+npx @nyron/cli push-tag
+```
+
+### Preview or Publish a Release
+
+```bash
+# Preview locally from git history
+npx @nyron/cli release --dry-run
+
+# Publish to GitHub using the tag you already pushed
+npx @nyron/cli release --use-existing-tag
+```
+
+### Setup GitHub Token for Publishing
+
+Publishing GitHub releases requires `GITHUB_TOKEN`:
 
 ```bash
 echo "GITHUB_TOKEN=your_github_token_here" > .env
@@ -37,20 +69,20 @@ echo "GITHUB_TOKEN=your_github_token_here" > .env
 
 Generate a token at [GitHub Settings → Personal Access Tokens](https://github.com/settings/tokens)
 
-### Start Versioning
+### Typical Workflow
 
 ```bash
-# Bump version and generate changelog
-npx @nyron/cli bump --type minor --prefix v
+# 1. Bump a version
+npx @nyron/cli bump --type minor
 
-# Commit changes
+# 2. Commit changes
 git add . && git commit -m "chore: bump version to 1.2.0"
 
-# Create GitHub release
-npx @nyron/cli release
+# 3. Push a Nyron release boundary
+npx @nyron/cli push-tag
 
-# Push commits
-git push
+# 4. Publish the GitHub release
+npx @nyron/cli release --use-existing-tag
 ```
 
 ## Documentation
@@ -65,9 +97,9 @@ git push
 
 ## Requirements
 
-- Git repository on GitHub
+- Git repository
 - Conventional commit format: `type(scope): message`
-- GitHub personal access token
+- GitHub personal access token for GitHub release publishing
 
 ## Contributing
 

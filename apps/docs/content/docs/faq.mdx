@@ -43,9 +43,16 @@ Each project will have its own version history and changelog.
 
 ## What if I don't have a GitHub token?
 
-Nyron will still work, but changelogs won't include GitHub usernames, avatars, or commit URLs—just the git author name.
+You can still use most of Nyron without a GitHub token:
 
-We recommend setting up a GitHub token for the best experience. See the [quickstart guide](/docs/getting-started/quickstart#setup-github-token-optional-but-recommended) for instructions.
+- `nyron init`
+- `nyron bump`
+- `nyron push-tag`
+- `nyron release --dry-run`
+
+Publishing a GitHub release requires `GITHUB_TOKEN`. Without a token, local dry-runs fall back to git author information instead of enriched GitHub metadata.
+
+See the [quickstart guide](/docs/getting-started/quickstart#setup-github-token-required-for-publishing) for instructions.
 
 ## What GitHub settings should I configure?
 
@@ -79,7 +86,7 @@ You can also use Bun, which is our recommended package manager for the best perf
 
 1. Install Nyron: `bun add -D @nyron/cli`
 2. Initialize configuration: `npx @nyron/cli init`
-3. Edit `nyron.config.ts` to match your existing tag format
+3. Edit `nyron.config.ts` to match your existing project layout
 4. Start using Nyron commands
 
 Nyron will work with your existing git tags—just make sure the `tagPrefix` in your config matches your current tagging convention.

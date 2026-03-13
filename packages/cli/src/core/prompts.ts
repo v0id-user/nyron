@@ -1,6 +1,13 @@
+import { createInterface } from "node:readline/promises"
+import { stdin as input, stdout as output } from "node:process"
+
 export async function ask(question: string): Promise<string> {
-  process.stdout.write(question);
-  const lineIter = console[Symbol.asyncIterator]();
-  const { value: line } = await lineIter.next();
-  return typeof line === "string" ? line.trim() : "";
+  const rl = createInterface({ input, output })
+
+  try {
+    const answer = await rl.question(question)
+    return answer.trim()
+  } finally {
+    rl.close()
+  }
 }

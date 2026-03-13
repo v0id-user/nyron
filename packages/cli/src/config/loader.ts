@@ -2,6 +2,7 @@ import { cosmiconfig, cosmiconfigSync } from "cosmiconfig"
 import { resolve } from "path"
 import type { NyronConfig, LoadConfigOptions, LoadConfigResult } from "./types"
 import { validateConfig } from "./validator"
+import { CliError } from "../core/errors"
 
 const MODULE_NAME = "nyron"
 
@@ -79,32 +80,32 @@ export async function loadConfig(
 
   if (!result) {
     if (required) {
-      console.error("❌ Configuration file not found")
-      console.error("   → Run 'nyron init' to create a configuration file")
-      console.error(`   → Searched from: ${searchFrom}`)
-      process.exit(1)
+      throw new CliError("Configuration file not found", {
+        details: [
+          "Run 'nyron init' to create a configuration file.",
+          `Searched from: ${searchFrom}`,
+        ],
+      })
     }
-    throw new Error("Configuration file not found")
+    throw new CliError("Configuration file not found")
   }
 
   try {
     // Validate the configuration
     validateConfig(result.config)
-
-    console.log(`✅ Configuration loaded from: ${result.filepath}`)
-    
     return {
       config: result.config,
       filepath: result.filepath,
       isEmpty: result.isEmpty || false,
     }
   } catch (error) {
-    console.error("❌ Failed to validate configuration")
-    console.error(`   → File: ${result.filepath}`)
-    if (error instanceof Error) {
-      console.error(`   → ${error.message}`)
-    }
-    process.exit(1)
+    throw new CliError("Failed to validate configuration", {
+      details: [
+        `File: ${result.filepath}`,
+        error instanceof Error ? error.message : String(error),
+      ],
+      cause: error,
+    })
   }
 }
 
@@ -130,32 +131,32 @@ export function loadConfigSync(
 
   if (!result) {
     if (required) {
-      console.error("❌ Configuration file not found")
-      console.error("   → Run 'nyron init' to create a configuration file")
-      console.error(`   → Searched from: ${searchFrom}`)
-      process.exit(1)
+      throw new CliError("Configuration file not found", {
+        details: [
+          "Run 'nyron init' to create a configuration file.",
+          `Searched from: ${searchFrom}`,
+        ],
+      })
     }
-    throw new Error("Configuration file not found")
+    throw new CliError("Configuration file not found")
   }
 
   try {
     // Validate the configuration
     validateConfig(result.config)
-
-    console.log(`✅ Configuration loaded from: ${result.filepath}`)
-    
     return {
       config: result.config,
       filepath: result.filepath,
       isEmpty: result.isEmpty || false,
     }
   } catch (error) {
-    console.error("❌ Failed to validate configuration")
-    console.error(`   → File: ${result.filepath}`)
-    if (error instanceof Error) {
-      console.error(`   → ${error.message}`)
-    }
-    process.exit(1)
+    throw new CliError("Failed to validate configuration", {
+      details: [
+        `File: ${result.filepath}`,
+        error instanceof Error ? error.message : String(error),
+      ],
+      cause: error,
+    })
   }
 }
 
@@ -173,17 +174,22 @@ export async function loadConfigFromFile(filepath: string): Promise<NyronConfig>
     const result = await explorer.load(absolutePath)
     
     if (!result) {
-      throw new Error(`Configuration file not found: ${absolutePath}`)
+      throw new CliError("Configuration file not found", {
+        details: [`File: ${absolutePath}`],
+      })
     }
 
     validateConfig(result.config)
     return result.config
   } catch (error) {
-    console.error(`❌ Failed to load configuration from: ${absolutePath}`)
-    if (error instanceof Error) {
-      console.error(`   → ${error.message}`)
+    if (error instanceof CliError) {
+      throw error
     }
-    throw error
+
+    throw new CliError(`Failed to load configuration from: ${absolutePath}`, {
+      details: [error instanceof Error ? error.message : String(error)],
+      cause: error,
+    })
   }
 }
 

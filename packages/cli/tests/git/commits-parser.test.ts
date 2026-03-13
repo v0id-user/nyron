@@ -1,4 +1,8 @@
-import { parseCommits, organizCommitsForChangelog } from "../../src/core/commits-parser"
+import {
+  filterMetaCommits,
+  parseCommits,
+  organizCommitsForChangelog,
+} from "../../src/core/commits-parser"
 import { describe, it, expect } from "bun:test"
 
 describe("commits-parser", () => {
@@ -253,9 +257,8 @@ describe("organizeForChangelog", () => {
     expect(organized.features[2]).not.toContain("**")
   })
 
-  it("should return empty arrays for no commits", () => {
-    const parsed = parseCommits([])
-    const organized = organizCommitsForChangelog(parsed)
+  it("should return empty arrays for an empty parsed commit map", () => {
+    const organized = organizCommitsForChangelog({})
     
     expect(organized).toEqual({
       features: [],
@@ -286,8 +289,22 @@ describe("organizeForChangelog", () => {
     const parsed = parseCommits(commits)
     const organized = organizCommitsForChangelog(parsed)
     
-    expect(organized.features[0]).toContain("John Doe")
+    expect(organized.features[0]).toContain("@v0id-user")
     expect(organized.features[0]).toContain("abc1234") // short hash
     expect(organized.features[0]).toContain("https://github.com/")
+  })
+})
+
+describe("filterMetaCommits", () => {
+  it("removes version and changelog maintenance commits", () => {
+    const commits = [
+      { hash: "1", message: "feat: add dashboard", author: "A", repo: "owner/repo", affectedFolders: [] },
+      { hash: "2", message: "chore: bump version to 1.2.0", author: "B", repo: "owner/repo", affectedFolders: [] },
+      { hash: "3", message: "chore: update changelog", author: "C", repo: "owner/repo", affectedFolders: [] },
+    ]
+
+    expect(filterMetaCommits(commits as any)).toEqual([
+      commits[0],
+    ])
   })
 })

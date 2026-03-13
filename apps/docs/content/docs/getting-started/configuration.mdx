@@ -28,12 +28,6 @@ export default defineConfig({
       path: "apps/frontend",
     },
   },
-  
-  // Automatically generate changelog on bump (default: true)
-  autoChangelog: true,
-  
-  // Remind to push tags after creating them (default: true)
-  onPushReminder: true,
 })
 ```
 
@@ -63,20 +57,6 @@ An object defining all projects in your repository. Each key is a project name, 
 <Callout type="info">
 **Note**: The `tagPrefix` you configure here is used for **project tags** (version tracking), not for nyron-release tags. Nyron-release tags always use the format `nyron-release@*` and are independent of your `tagPrefix` configuration. Your existing tags won't interfere with Nyron, and Nyron won't use them as release boundaries.
 </Callout>
-
-### `autoChangelog`
-
-**Type:** `boolean`  
-**Default:** `true`
-
-Automatically generate changelog when running `nyron bump`.
-
-### `onPushReminder`
-
-**Type:** `boolean`  
-**Default:** `true`
-
-Show a reminder to push tags after creating them.
 
 ## Monorepo Setup
 
