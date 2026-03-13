@@ -1,13 +1,54 @@
-// Reads package.json files
-// Only handles versions
-// Returns the version
-
 import { readFileSync, existsSync } from "fs"
 import { resolve, basename } from "path"
 
+export interface PackageJson {
+  name?: string
+  version?: string
+  repository?:
+    | string
+    | {
+        type?: string
+        url?: string
+      }
+  workspaces?: string[] | { packages?: string[] }
+  [key: string]: unknown
+}
+
+function resolvePackageJsonPath(path: string): string {
+  return basename(path) === "package.json"
+    ? path
+    : resolve(path, "package.json")
+}
+
+export const readPackageJson = (path: string): PackageJson => {
+  return JSON.parse(readFileSync(resolvePackageJsonPath(path), "utf8")) as PackageJson
+}
+
 export const getPackageVersion = (path: string) => {
-  const packageJson = JSON.parse(readFileSync(resolve(path, "package.json"), "utf8"))
-  return packageJson.version
+  return readPackageJson(path).version
+}
+
+export const getPackageName = (path: string) => {
+  return readPackageJson(path).name
+}
+
+export const getPackageWorkspaces = (path: string): string[] => {
+  const packageJson = readPackageJson(path)
+  const workspaces = packageJson.workspaces
+
+  if (Array.isArray(workspaces)) {
+    return workspaces
+  }
+
+  if (
+    workspaces &&
+    typeof workspaces === "object" &&
+    Array.isArray(workspaces.packages)
+  ) {
+    return workspaces.packages
+  }
+
+  return []
 }
 
 /**
@@ -24,10 +65,7 @@ export const getPackageVersion = (path: string) => {
  * ```
  */
 export const packageJsonExists = (path: string): boolean => {
-  const packageJsonPath = basename(path) === "package.json" 
-    ? path 
-    : resolve(path, "package.json")
-  return existsSync(packageJsonPath)
+  return existsSync(resolvePackageJsonPath(path))
 }
 
 /**
@@ -45,15 +83,13 @@ export const packageJsonExists = (path: string): boolean => {
  */
 export const validatePackageJson = (path: string): boolean => {
   try {
-    const packageJsonPath = basename(path) === "package.json" 
-      ? path 
-      : resolve(path, "package.json")
+    const packageJsonPath = resolvePackageJsonPath(path)
     
     if (!existsSync(packageJsonPath)) {
       return false
     }
     
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"))
+    const packageJson = readPackageJson(packageJsonPath)
     return typeof packageJson.version === "string" && packageJson.version.length > 0
   } catch {
     return false

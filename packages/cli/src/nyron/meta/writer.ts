@@ -12,7 +12,6 @@ import { META_ROOT_PATH } from "./file-parser"
 import { readMeta } from "./reader"
 import { bumpVersion } from "../../core/semver"
 import type { BumpType } from "../../core/types"
-import { generateNyronReleaseTag } from "../../core/tag-parser"
 
 /**
  * Writes meta data to the meta file.
@@ -56,7 +55,7 @@ export async function initMeta() {
     await writeFile(metaPath, JSON.stringify({
         packages: [],
         createdAt: new Date(),
-        latestTag: generateNyronReleaseTag()
+        latestTag: undefined
     }, null, 2))
 }
 

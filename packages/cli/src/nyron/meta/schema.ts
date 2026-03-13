@@ -37,7 +37,7 @@ const projectType = type({
 export const MetaSchema = type({
     packages: projectType.array(),
     createdAt: type("string").pipe((s) => new Date(s)),
-    latestTag: "(/^nyron-release@/ | undefined)", // Latest tag, if it exists
+    "latestTag?": "(/^nyron-release@/ | undefined)", // Latest tag, if it exists
 })
 
 /**

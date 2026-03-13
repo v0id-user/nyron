@@ -2,7 +2,7 @@ import path from "path"
 import { CHANGELOG_ROOT_PATH } from "./changelog/file-parser"
 import { META_ROOT_PATH } from "./meta/file-parser"
 import { VERSIONS_ROOT_PATH } from "./versions/file-parser"
-import { fileExists, folderExists, writeFile } from "../core/files"
+import { fileExists, folderExists } from "../core/files"
 import { mkdir } from "fs/promises"
 import { initMeta } from "./meta/writer"
 import { initVersions } from "./versions/writer"
@@ -56,17 +56,11 @@ export async function createNyronDirectory(): Promise<void> {
         await mkdir(changelogDir, { recursive: true });
     }
 
-    // Ensure meta.json and versions.json files exist (create empty files if not present)
+    // Initialize metadata files if they do not exist yet.
     if (!await fileExists(metaFile)) {
-        await writeFile(metaFile, "{}");
+        await initMeta()
     }
     if (!await fileExists(versionsFile)) {
-        await writeFile(versionsFile, "{}");
+        await initVersions()
     }
-
-    // Initialize meta file
-    await initMeta()
-
-    // Initialize versions file
-    await initVersions()
 }
