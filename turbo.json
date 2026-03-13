@@ -5,6 +5,14 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**"]
     },
+    "@nyron/cli#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "@nyron/bot#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["lib/**"]
+    },
     "lint": {},
     "dev": {
       "cache": false,
