@@ -6,6 +6,9 @@
   "main": "index.js",
   "scripts": {
     "build": "turbo build",
+    "build:cli": "turbo build --filter=@nyron/cli",
+    "build:bot": "turbo build --filter=@nyron/bot",
+    "build:docs": "turbo build --filter=@nyron/docs",
     "lint": "turbo lint",
     "dev": "turbo dev",
     "test": "bun run test:cli",
