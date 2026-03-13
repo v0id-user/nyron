@@ -18,6 +18,19 @@ Examples:
 - `feat(cli): add dry-run release summary`
 - `chore: refresh Bun workspace dependencies`
 
+### Commit regularly and split changes by concern
+
+- Commit early and often. Do not accumulate large diffs spanning multiple concerns into a single commit.
+- Each commit should represent one logical change: a single bug fix, a single feature addition, a single config update, or a single documentation change.
+- If a task involves changes to multiple subsystems (e.g., docs config, turbo config, CI pipeline), split them into separate commits with appropriate scopes.
+- Never mix unrelated changes in one commit. For example, do not combine a dependency update with a feature implementation.
+- Prefer small, reviewable commits over large monolithic ones.
+
+### Build and test before pushing
+
+- Run `bun run build` at the repo root before pushing to verify all packages compile.
+- Run `bun run test` to confirm existing tests pass.
+
 ### Before finishing work
 
 - If a PR already exists for your branch, verify its title is Conventional Commit compliant.
