@@ -1,0 +1,57 @@
+---
+title: nyron validate
+description: Validate .nyron state files and their local JSON Schemas
+---
+
+# nyron validate
+
+Validate your local Nyron state files.
+
+## Usage
+
+```bash
+npx @nyron/cli validate
+```
+
+## What It Checks
+
+`nyron validate` verifies that all of the following exist and are well-formed:
+
+- `.nyron/meta.json`
+- `.nyron/versions.json`
+- `.nyron/meta.schema.json`
+- `.nyron/versions.schema.json`
+
+It validates the JSON structure and prints a focused error if one of the state files is malformed.
+
+## Why It Exists
+
+Use this command when:
+
+- a previous bump or release flow was interrupted
+- you edited `.nyron/` files manually
+- your editor or formatter touched the state files and you want to confirm they still match Nyron's expected shape
+
+## Example
+
+```bash
+npx @nyron/cli validate
+```
+
+Sample output:
+
+```text
+🔍 Validating Nyron state files...
+
+✓ .nyron/meta.json is valid (1 package(s))
+✓ .nyron/versions.json is valid (1 project history bucket(s))
+✓ Local schemas found at .nyron/meta.schema.json and .nyron/versions.schema.json
+
+✅ Nyron state files are valid
+```
+
+## Related Docs
+
+- [State file reference](/docs/guides/state-files)
+- [`nyron init`](/docs/commands/init)
+- [`nyron fix`](/docs/commands/fix)

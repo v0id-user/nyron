@@ -23,6 +23,8 @@ The `push-tag` command:
 4. **Updates meta.json** with the latest release tag
 5. **Triggers automated workflows** that listen for `nyron-release@*` tags
 
+After `push-tag`, commit the updated `.nyron/` state files before your next release step.
+
 ## GPG Signing
 
 Nyron automatically signs tags with GPG if you have it configured, providing enhanced security and verification for your releases.
@@ -148,6 +150,7 @@ Sample output:
 ✓ Generated tag: nyron-release@2024-01-15@14-30-25.123
 ✓ Tag created and pushed successfully
 ✅ Updated meta.json with latest tag: nyron-release@2024-01-15@14-30-25.123
+⚠️  Commit the updated .nyron state files before your next release step.
 ```
 
 ### After version bump
@@ -162,6 +165,10 @@ git commit -m "chore: bump version to 1.2.0"
 
 # Push the nyron-release tag
 npx @nyron/cli push-tag
+
+# Commit the updated state files
+git add .nyron/meta.json .nyron/versions.json
+git commit -m "chore(nyron): update release tag"
 ```
 
 ## Understanding Nyron Tags

@@ -28,7 +28,7 @@ Nyron determines which `nyron-release@*` tags to use based on the mode:
 <Callout type="warn">
 **Important**: Nyron **only** uses `nyron-release@*` tags to determine release boundaries. Your project version tags (like `v1.0.0`, `@pkg/name@1.0.0`) are not used for this purpose. 
 
-**At least one nyron-release tag is required** - The `release` command will fail with an error if no `nyron-release@*` tag exists. You must create your first tag using `push-tag` before you can create releases.
+**At least one nyron-release tag is required** - Create your first tag using `push-tag`, then use `release --use-existing-tag`. If there is only one Nyron release boundary tag, Nyron uses repository history from the start of the repo up to that tag.
 </Callout>
 
 ### Step 2: Commit Extraction
@@ -129,7 +129,7 @@ nyron-release@date1 ---- A ---- B ---- C ---- nyron-release@date2 ---- D ---- E 
 **Tag Creation Timing**:
 - **`nyron push-tag`**: Creates and pushes the tag immediately at the current HEAD
 - **`nyron release` (without `--use-existing-tag`)**: Creates a new tag after the release is published. This tag marks the boundary for the next release, not the current one.
-- **`nyron release --use-existing-tag`**: Does not create a tag. Uses the existing tag you pushed with `push-tag` and fetches commits between the previous tag and the tag you just pushed.
+- **`nyron release --use-existing-tag`**: Does not create a tag. Uses the existing tag you pushed with `push-tag` and fetches commits between the previous tag and the tag you just pushed. On a first release, it falls back to repository start.
 
 ## Two Release Modes
 
@@ -157,7 +157,7 @@ Used for creating a release from existing state:
 **Use case**: You want to create a release for all commits since the last release, and have Nyron automatically mark where the next release will start from.
 
 <Callout type="warn">
-**For existing repositories**: If you're starting with Nyron on a repo that already has many commits and tags, create an initial `nyron-release@*` tag at your desired starting point using `push-tag`. Future releases will only include commits after that tag. Without an initial tag, `release` will fail because it requires at least one nyron-release tag to exist.
+**For existing repositories**: If you're starting with Nyron on a repo that already has many commits and tags, create an initial `nyron-release@*` tag at your desired starting point using `push-tag`. Then publish the first release with `release --use-existing-tag`. Future releases will include commits after that boundary.
 </Callout>
 
 ## What Makes It Work
@@ -180,7 +180,7 @@ The GitHub integration provides rich context:
 - **Commit links**: Jump directly to the commit on GitHub
 - **Repository metadata**: Accurate project information
 
-GitHub is required when you publish a GitHub release. Local setup, version bumps, tag pushes, and `--dry-run` release previews can still work from local git history without GitHub authentication.
+GitHub is required when you publish a GitHub release. Nyron can use `GITHUB_TOKEN`, `GH_TOKEN`, or a GitHub CLI session from `gh auth login`. Local setup, version bumps, tag pushes, and `--dry-run` release previews can still work from local git history without GitHub authentication.
 
 ## Benefits
 
