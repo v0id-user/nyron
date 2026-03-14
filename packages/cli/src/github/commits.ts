@@ -5,7 +5,11 @@
 
 import { parseRepo } from "./repo-parser"
 import { hasGitHubToken, resolveOctokit, type CommitDiff } from "./types"
-import { getGitCommitsBetween, getGitCommitsSince } from "../git/commits"
+import {
+  getGitCommitsBetween,
+  getGitCommitsSince,
+  getGitCommitsUntil,
+} from "../git/commits"
 
 function toAffectedFolders(files: string[]): string[] {
   return files
@@ -91,4 +95,12 @@ export async function getCommitsSince(releaseTag: string, repo: string, clientOr
   }
 
   return getCommitsBetween(releaseTag, "HEAD", repo, clientOrContext)
+}
+
+export async function getCommitsUntil(
+  releaseTag: string,
+  repo: string,
+): Promise<CommitDiff[]> {
+  // First-release fallback only needs local git history and works offline.
+  return getGitCommitsUntil(releaseTag, repo)
 }

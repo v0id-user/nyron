@@ -21,6 +21,7 @@ import { readMeta } from "../nyron/meta/reader";
 import { writePackageVersion } from "../package/write";
 import { resolve } from "path";
 import { CliError } from "../core/errors";
+import { syncNyronState } from "../nyron/state";
 
 function resolveProjectId(
   requestedProject: string | undefined,
@@ -60,6 +61,10 @@ export const bump = async (options: BumpOptions): Promise<BumpResult> => {
      if (!projectConfig) {
        throw new CliError(`Project "${projectId}" not found in config`)
      }
+
+     // Refresh .nyron state from package.json before bumping so package.json stays
+     // the source of truth if the state files were manually edited or auto-formatted.
+     await syncNyronState(config)
 
      // Bump the version in meta and versions tracking
      await syncincrementVersion(projectId, options.type)

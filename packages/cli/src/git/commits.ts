@@ -87,3 +87,10 @@ export async function getGitCommitsSince(
 ): Promise<CommitDiff[]> {
   return getGitCommitsBetween(fromRef, "HEAD", repo)
 }
+
+export async function getGitCommitsUntil(
+  toRef: string,
+  repo: string,
+): Promise<CommitDiff[]> {
+  return readGitCommits(toRef, repo)
+}

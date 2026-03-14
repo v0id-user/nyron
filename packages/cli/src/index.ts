@@ -8,6 +8,7 @@ import { pushNyronReleaseTagAction } from "./actions/pushTag"
 import { version } from '../package.json'
 import { fix } from "./actions/fix"
 import { runCommand } from "./core/command"
+import { validate } from "./actions/validate"
 
 import dotenv from "dotenv"
 
@@ -26,6 +27,7 @@ program
     `
 Examples:
   $ nyron init
+  $ nyron validate
   $ nyron bump --type minor
   $ nyron bump --type patch --project cli
   $ nyron push-tag
@@ -97,8 +99,10 @@ Examples:
 
 Notes:
   - Use --use-existing-tag after running 'nyron push-tag'.
+  - First releases can use --use-existing-tag after a single push-tag; Nyron will diff from repository start.
   - Dry-runs can work from local git history.
-  - Publishing a GitHub release requires GITHUB_TOKEN.
+  - Publishing a GitHub release uses GITHUB_TOKEN, GH_TOKEN, or 'gh auth token'.
+  - Nyron release tags must look like: nyron-release@YYYY-MM-DD@HH-MM-SS.mmm
 `,
   )
   .action(runCommand(release))
@@ -117,9 +121,33 @@ Example:
 
 Use this when you want to mark a release boundary before running:
   $ nyron release --use-existing-tag
+
+Nyron release tags use this format:
+  nyron-release@YYYY-MM-DD@HH-MM-SS.mmm
 `,
   )
   .action(runCommand(pushNyronReleaseTagAction))
+
+// -----------------------------
+// validate
+// -----------------------------
+program
+  .command("validate")
+  .description("Validate .nyron state files and their local JSON Schemas.")
+  .addHelpText(
+    "after",
+    `
+Example:
+  $ nyron validate
+
+This checks:
+  - .nyron/meta.json
+  - .nyron/versions.json
+  - .nyron/meta.schema.json
+  - .nyron/versions.schema.json
+`,
+  )
+  .action(runCommand(validate))
 
 // -----------------------------
 // fix

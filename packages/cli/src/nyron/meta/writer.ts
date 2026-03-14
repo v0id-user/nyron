@@ -8,10 +8,17 @@
 import path from "path"
 import type { Meta } from "./schema"
 import { writeFile } from "../../core/files"
-import { META_ROOT_PATH } from "./file-parser"
+import { META_ROOT_PATH, META_SCHEMA_REF } from "./file-parser"
 import { readMeta } from "./reader"
 import { bumpVersion } from "../../core/semver"
 import type { BumpType } from "../../core/types"
+
+function withMetaSchema(meta: Meta) {
+    return {
+        ...meta,
+        $schema: META_SCHEMA_REF,
+    }
+}
 
 /**
  * Writes meta data to the meta file.
@@ -37,7 +44,7 @@ import type { BumpType } from "../../core/types"
  */
 export async function writeMeta(meta: Meta) {
     const metaPath = path.join(process.cwd(), META_ROOT_PATH)
-    await writeFile(metaPath, JSON.stringify(meta, null, 2))
+    await writeFile(metaPath, JSON.stringify(withMetaSchema(meta), null, 2))
 }
 
 /**
@@ -53,6 +60,7 @@ export async function writeMeta(meta: Meta) {
 export async function initMeta() {
     const metaPath = path.join(process.cwd(), META_ROOT_PATH)
     await writeFile(metaPath, JSON.stringify({
+        $schema: META_SCHEMA_REF,
         packages: [],
         createdAt: new Date(),
         latestTag: undefined

@@ -28,7 +28,11 @@ describe("createNyronDirectory", () => {
         await createNyronDirectory()
 
         expect(Bun.file(path.join(tempDir, ".nyron/meta.json"))).toBeDefined()
+        expect(await Bun.file(path.join(tempDir, ".nyron/meta.json")).text()).toContain("\"$schema\": \"./meta.schema.json\"")
         expect(await Bun.file(path.join(tempDir, ".nyron/meta.json")).text()).toContain("\"packages\": []")
+        expect(await Bun.file(path.join(tempDir, ".nyron/versions.json")).text()).toContain("\"$schema\": \"./versions.schema.json\"")
         expect(await Bun.file(path.join(tempDir, ".nyron/versions.json")).text()).toContain("\"packages\": {}")
+        expect(await Bun.file(path.join(tempDir, ".nyron/meta.schema.json")).text()).toContain("\"title\": \"Nyron meta state\"")
+        expect(await Bun.file(path.join(tempDir, ".nyron/versions.schema.json")).text()).toContain("\"title\": \"Nyron version history state\"")
     })
 })
