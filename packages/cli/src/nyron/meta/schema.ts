@@ -35,6 +35,7 @@ const projectType = type({
  * @property {string | undefined} latestTag - The latest release tag (matches pattern /^nyron-release@/) or undefined
  */
 export const MetaSchema = type({
+    "$schema?": "string",
     packages: projectType.array(),
     createdAt: type("string").pipe((s) => new Date(s)),
     "latestTag?": "(/^nyron-release@/ | undefined)", // Latest tag, if it exists

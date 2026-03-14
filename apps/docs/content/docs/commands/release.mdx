@@ -45,7 +45,7 @@ Use this when:
 - You are running in CI/CD after pushing the tag locally
 - You want local control over when the release boundary is created
 
-When using `--use-existing-tag`, Nyron fetches commits **between** the previous boundary tag and the latest one. Without it, Nyron fetches commits **since** the latest boundary tag and then creates the next boundary tag after publishing.
+When using `--use-existing-tag`, Nyron fetches commits **between** the previous boundary tag and the latest one. On a first release, if there is only one Nyron release boundary tag, Nyron automatically falls back to **repository start → latest tag**. Without it, Nyron fetches commits **since** the latest boundary tag and then creates the next boundary tag after publishing.
 
 ```bash
 npx @nyron/cli release --use-existing-tag
@@ -53,8 +53,8 @@ npx @nyron/cli release --use-existing-tag
 
 ## Local Preview vs GitHub Publishing
 
-- `--dry-run` works from local git history and does **not** require `GITHUB_TOKEN`
-- Publishing a GitHub release **does** require `GITHUB_TOKEN`
+- `--dry-run` works from local git history and does **not** require GitHub auth
+- Publishing a GitHub release uses `GITHUB_TOKEN`, `GH_TOKEN`, or a GitHub CLI session from `gh auth login`
 
 ## Example: Using with push-tag
 
@@ -80,7 +80,7 @@ The `release` command works by:
 
 ## Prerequisites
 
-- **Required for publishing:** A `GITHUB_TOKEN` environment variable must be set
+- **Required for publishing:** GitHub auth via `GITHUB_TOKEN`, `GH_TOKEN`, or `gh auth login`
 - **Required:** At least one `nyron-release@*` tag must exist
 - **Required:** Commits must follow [conventional commit format](/docs/guides/conventional-commits)
 
@@ -198,11 +198,11 @@ Run `npx @nyron/cli push-tag` first.
 ```
 This means there are no new commits since the last release.
 
-**Missing GitHub token:**
+**Missing GitHub auth:**
 ```
-Publishing a GitHub release requires GITHUB_TOKEN
+Publishing a GitHub release requires GitHub authentication
 ```
-Set your GitHub token in a `.env` file or environment variable, or run `nyron release --dry-run` to preview locally.
+Set a token in `.env`, export `GITHUB_TOKEN`, or log in with `gh auth login`. You can still run `nyron release --dry-run` to preview locally.
 
 ## Next Steps
 

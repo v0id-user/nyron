@@ -18,6 +18,8 @@ This command creates a usable first-run setup in your current project:
 - `nyron.config.ts`
 - `.nyron/meta.json`
 - `.nyron/versions.json`
+- `.nyron/meta.schema.json`
+- `.nyron/versions.schema.json`
 
 ## Options
 
@@ -49,13 +51,14 @@ export default defineConfig({
 
 For monorepos, Nyron creates one project entry per discovered workspace package.
 
-After writing the config, Nyron synchronizes `.nyron/meta.json` and `.nyron/versions.json` using the discovered project versions so you can use `nyron bump` immediately.
+After writing the config, Nyron synchronizes `.nyron/meta.json` and `.nyron/versions.json` using the discovered project versions so you can use `nyron bump` immediately. The generated state files also point at local JSON Schema files so editors and validation tools can show the expected structure.
 
 ## Next Steps
 
 After initialization:
 
 1. Review and adjust `nyron.config.ts` if the detected projects need tweaking
-2. Run [`nyron bump`](/docs/commands/bump) to update a version
-3. Run [`nyron push-tag`](/docs/commands/push-tag) when you are ready to mark a release boundary
+2. Run [`nyron validate`](/docs/commands/validate) to verify the generated `.nyron/` state files
+3. Run [`nyron bump`](/docs/commands/bump) to update a version
+4. Run [`nyron push-tag`](/docs/commands/push-tag) when you are ready to mark a release boundary
 

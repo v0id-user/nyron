@@ -5,11 +5,17 @@
  * which contains package version information and metadata.
  */
 
-import path from "path"
-import { type } from "arktype"
-import { readFile } from "../../core/files"
 import { VERSIONS_ROOT_PATH } from "./file-parser"
 import { VersionsSchema, type Versions } from "./schema"
+import { readStateFile } from "../state-file"
+
+const VERSIONS_EXPECTED_SHAPE = `{
+  "$schema": "./versions.schema.json",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "packages": {
+    "cli": [{ "prefix": "cli", "version": "1.2.3", "lastPublished": "2026-01-01T00:00:00.000Z" }]
+  }
+}`
 
 /**
  * Reads and parses the versions file from the project root.
@@ -31,13 +37,10 @@ import { VersionsSchema, type Versions } from "./schema"
  * ```
  */
 export async function readVersions(): Promise<Versions> {
-    const versionsPath = path.join(process.cwd(), VERSIONS_ROOT_PATH)
-    const versions = await readFile(versionsPath)
-    const result = VersionsSchema(JSON.parse(versions))
-    
-    if (result instanceof type.errors) {
-        throw new Error(`Invalid versions file: ${result.summary}`)
-    }
-    
-    return result
+    return readStateFile<Versions>({
+        label: "versions",
+        rootPath: VERSIONS_ROOT_PATH,
+        expectedShape: VERSIONS_EXPECTED_SHAPE,
+        schema: VersionsSchema,
+    })
 }

@@ -11,4 +11,6 @@ export const pushNyronReleaseTagAction = async () => {
   // Update meta.json with the new tag
   await setMetaLatestTag(tag)
   console.log(`✅ Updated meta.json with latest tag: ${tag}`)
+  console.log("⚠️  Commit the updated .nyron state files before your next release step.")
+  console.log('   → Suggested commit: chore(nyron): update release tag')
 }

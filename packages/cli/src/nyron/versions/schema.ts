@@ -35,6 +35,7 @@ export const PackageInfoSchema = type({
  * @property {Object.<string, PackageInfo[]>} packages - Mapping of package prefixes to their version history arrays
  */
 export const VersionsSchema = type({
+    "$schema?": "string",
     createdAt: "string",
     packages: {
         "[string]": PackageInfoSchema.array()

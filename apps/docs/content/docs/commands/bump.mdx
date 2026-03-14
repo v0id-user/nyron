@@ -49,9 +49,10 @@ npx @nyron/cli bump --type patch --project api
 When you run `nyron bump`, it performs the following steps:
 
 1. **Chooses the target project** from `nyron.config.ts`
-2. **Increments the version** in `.nyron/meta.json` for the selected project
-3. **Records the version transition** in `.nyron/versions.json`
-4. **Updates `package.json`** in the project directory to match the new version
+2. **Refreshes `.nyron/` state from `package.json`** so the working package version stays the source of truth
+3. **Increments the version** in `.nyron/meta.json` for the selected project
+4. **Records the version transition** in `.nyron/versions.json`
+5. **Updates `package.json`** in the project directory to match the new version
 
 Nyron uses the project key from `nyron.config.ts`, not the tag prefix, when selecting which project to bump.
 

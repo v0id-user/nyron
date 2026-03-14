@@ -5,10 +5,16 @@
  * which contains high-level project metadata and package information.
  */
 
-import path from "path"
-import { type } from "arktype"
-import { readFile } from "../../core/files"
+import { META_ROOT_PATH } from "./file-parser"
 import { MetaSchema, type Meta } from "./schema"
+import { readStateFile } from "../state-file"
+
+const META_EXPECTED_SHAPE = `{
+  "$schema": "./meta.schema.json",
+  "packages": [{ "prefix": "cli", "version": "1.2.3" }],
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "latestTag": "nyron-release@2026-01-01@00-00-00.000"
+}`
 
 /**
  * Reads and parses the meta file from the project root.
@@ -31,13 +37,10 @@ import { MetaSchema, type Meta } from "./schema"
  * ```
  */
 export async function readMeta(): Promise<Meta> {
-    const metaPath = path.join(process.cwd(), ".nyron", "meta.json")
-    const meta = await readFile(metaPath)
-    const result = MetaSchema(JSON.parse(meta))
-    
-    if (result instanceof type.errors) {
-        throw new Error(`Invalid meta file: ${result.summary}`)
-    }
-    
-    return result
+    return readStateFile<Meta>({
+        label: "meta",
+        rootPath: META_ROOT_PATH,
+        expectedShape: META_EXPECTED_SHAPE,
+        schema: MetaSchema,
+    })
 }

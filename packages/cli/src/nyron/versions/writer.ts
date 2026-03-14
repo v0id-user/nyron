@@ -8,8 +8,15 @@
 import path from "path"
 import { writeFile } from "../../core/files"
 import { readVersions } from "./reader"
-import { VERSIONS_ROOT_PATH } from "./file-parser"
+import { VERSIONS_ROOT_PATH, VERSIONS_SCHEMA_REF } from "./file-parser"
 import type { PackageInfo } from "./schema"
+
+function withVersionsSchema(versions: import("./schema").Versions) {
+    return {
+        ...versions,
+        $schema: VERSIONS_SCHEMA_REF,
+    }
+}
 
 /**
  * Writes a new package version entry to the versions file.
@@ -49,7 +56,7 @@ export async function writeVersions(prefix: string, packageInfo: PackageInfo) {
     
     // Write back to file
     const versionsPath = path.join(process.cwd(), VERSIONS_ROOT_PATH)
-    await writeFile(versionsPath, JSON.stringify(versions, null, 2))
+    await writeFile(versionsPath, JSON.stringify(withVersionsSchema(versions), null, 2))
 }
 
 /**
@@ -65,6 +72,7 @@ export async function writeVersions(prefix: string, packageInfo: PackageInfo) {
 export async function initVersions() {
     const versionsPath = path.join(process.cwd(), VERSIONS_ROOT_PATH)
     await writeFile(versionsPath, JSON.stringify({
+        $schema: VERSIONS_SCHEMA_REF,
         createdAt: new Date(),
         packages: {}
     }, null, 2))
@@ -91,7 +99,7 @@ export async function initVersions() {
  */
 export async function writeVersionsRaw(versions: import("./schema").Versions) {
     const versionsPath = path.join(process.cwd(), VERSIONS_ROOT_PATH)
-    await writeFile(versionsPath, JSON.stringify(versions, null, 2))
+    await writeFile(versionsPath, JSON.stringify(withVersionsSchema(versions), null, 2))
 }
 
 /**

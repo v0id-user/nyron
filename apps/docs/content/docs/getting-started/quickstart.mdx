@@ -15,7 +15,7 @@ Run the initialization command to create a configuration file:
 npx @nyron/cli init
 ```
 
-This creates a `nyron.config.ts` file plus `.nyron/meta.json` and `.nyron/versions.json`.
+This creates a `nyron.config.ts` file plus `.nyron/meta.json`, `.nyron/versions.json`, and matching local JSON Schema files inside `.nyron/`.
 
 For a single-package repository, the generated config looks like this:
 
@@ -57,7 +57,7 @@ export default defineConfig({
 
 ## Setup GitHub Token (Required for Publishing)
 
-You only need a GitHub token when you want to publish a GitHub release:
+You only need GitHub authentication when you want to publish a GitHub release:
 
 ```bash
 # Create .env in your project root
@@ -74,7 +74,7 @@ Generate a token at [GitHub Settings → Developer settings → Personal access 
 - `security_events` (**Read and write security events**)
 
 <Callout type="info">
-You can still run `nyron init`, `nyron bump`, `nyron push-tag`, and `nyron release --dry-run` without `GITHUB_TOKEN`. GitHub authentication is required when you publish the release to GitHub.
+You can still run `nyron init`, `nyron bump`, `nyron push-tag`, and `nyron release --dry-run` without `GITHUB_TOKEN`. GitHub authentication is required when you publish the release to GitHub, and Nyron can also fall back to `gh auth login`.
 </Callout>
 
 ## Understanding Nyron Tags
@@ -140,7 +140,7 @@ After pushing your first nyron-release tag, create a release:
 npx @nyron/cli release --use-existing-tag
 ```
 
-The `--use-existing-tag` flag tells Nyron to use the existing nyron-release tag you just pushed, rather than creating a new one.
+The `--use-existing-tag` flag tells Nyron to use the existing nyron-release tag you just pushed, rather than creating a new one. On a first release, Nyron will use repository history from the start of the repo up to that tag.
 
 ## Start Using Nyron
 
@@ -161,7 +161,11 @@ git commit -m "chore: bump version to 1.2.0"
 # 3. Create and push nyron-release tag (GPG-signed if configured)
 npx @nyron/cli push-tag
 
-# 4. Create GitHub release (use --use-existing-tag since tag already exists)
+# 4. Commit the updated state files
+git add .nyron/meta.json .nyron/versions.json
+git commit -m "chore(nyron): update release tag"
+
+# 5. Create GitHub release (use --use-existing-tag since tag already exists)
 npx @nyron/cli release --use-existing-tag
 ```
 

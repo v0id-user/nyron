@@ -34,6 +34,8 @@ This creates:
 - `nyron.config.ts`
 - `.nyron/meta.json`
 - `.nyron/versions.json`
+- `.nyron/meta.schema.json`
+- `.nyron/versions.schema.json`
 
 ### Bump a Version
 
@@ -49,6 +51,12 @@ npx @nyron/cli bump --type minor --project cli
 npx @nyron/cli push-tag
 ```
 
+Nyron release tags use the timestamp format:
+
+```text
+nyron-release@YYYY-MM-DD@HH-MM-SS.mmm
+```
+
 ### Preview or Publish a Release
 
 ```bash
@@ -57,11 +65,14 @@ npx @nyron/cli release --dry-run
 
 # Publish to GitHub using the tag you already pushed
 npx @nyron/cli release --use-existing-tag
+
+# Validate local Nyron state files
+npx @nyron/cli validate
 ```
 
-### Setup GitHub Token for Publishing
+### Setup GitHub Auth for Publishing
 
-Publishing GitHub releases requires `GITHUB_TOKEN`:
+Publishing GitHub releases requires GitHub authentication. Nyron supports `GITHUB_TOKEN`, `GH_TOKEN`, or a GitHub CLI session from `gh auth login`:
 
 ```bash
 echo "GITHUB_TOKEN=your_github_token_here" > .env
@@ -84,6 +95,8 @@ npx @nyron/cli push-tag
 # 4. Publish the GitHub release
 npx @nyron/cli release --use-existing-tag
 ```
+
+On a first release, `release --use-existing-tag` will automatically diff from the start of repository history up to the tag you just pushed.
 
 ## Documentation
 

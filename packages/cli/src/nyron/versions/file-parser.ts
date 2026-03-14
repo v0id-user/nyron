@@ -15,3 +15,13 @@
  * @constant {string}
  */
 export const VERSIONS_ROOT_PATH = ".nyron/versions.json"
+
+/**
+ * Local JSON Schema file written alongside `.nyron/versions.json`.
+ */
+export const VERSIONS_SCHEMA_ROOT_PATH = ".nyron/versions.schema.json"
+
+/**
+ * `$schema` reference stored inside `.nyron/versions.json`.
+ */
+export const VERSIONS_SCHEMA_REF = "./versions.schema.json"

@@ -17,3 +17,13 @@
  * @constant {string}
  */
 export const META_ROOT_PATH = ".nyron/meta.json"
+
+/**
+ * Local JSON Schema file written alongside `.nyron/meta.json`.
+ */
+export const META_SCHEMA_ROOT_PATH = ".nyron/meta.schema.json"
+
+/**
+ * `$schema` reference stored inside `.nyron/meta.json`.
+ */
+export const META_SCHEMA_REF = "./meta.schema.json"
