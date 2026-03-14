@@ -61,7 +61,6 @@ const mockGetCommitsUntil = mock(() =>
     },
   ]),
 )
-const mockGenerateChangelogMarkdown = mock(() => Promise.resolve("## Features"))
 const mockGetUpdatedVersions = mock(() =>
   Promise.resolve(["cli@1.2.3 -> cli@1.2.4"]),
 )
@@ -86,15 +85,6 @@ mock.module("../../src/github/commits", () => ({
   getCommitsBetween: mockGetCommitsBetween,
   getCommitsSince: mockGetCommitsSince,
   getCommitsUntil: mockGetCommitsUntil,
-}))
-
-mock.module("../../src/core/commits-parser", () => ({
-  filterMetaCommits: (commits: unknown[]) => commits,
-  parseCommits: mock((commits: unknown[]) => commits),
-}))
-
-mock.module("../../src/changelog/generateChangelog", () => ({
-  generateChangelogMarkdown: mockGenerateChangelogMarkdown,
 }))
 
 mock.module("../../src/nyron/version", () => ({
@@ -140,7 +130,6 @@ describe("release", () => {
     mockGetCommitsBetween.mockClear()
     mockGetCommitsSince.mockClear()
     mockGetCommitsUntil.mockClear()
-    mockGenerateChangelogMarkdown.mockClear()
     mockGetUpdatedVersions.mockClear()
     mockCreateRelease.mockClear()
     mockPushNyronReleaseTag.mockClear()
@@ -170,11 +159,12 @@ describe("release", () => {
   it("does not create a new boundary tag after publishing with --use-existing-tag", async () => {
     await release({ useExistingTag: true })
 
-    expect(mockCreateRelease).toHaveBeenCalledWith(
-      "acme/example",
-      "nyron-release@2026-01-02@00-00-00.000",
-      "## Features",
-    )
+    expect(mockCreateRelease).toHaveBeenCalledTimes(1)
+    const releaseArgs = mockCreateRelease.mock.calls[0]
+    expect(releaseArgs?.[0]).toBe("acme/example")
+    expect(releaseArgs?.[1]).toBe("nyron-release@2026-01-02@00-00-00.000")
+    expect(releaseArgs?.[2]).toContain("# Changelog release notes")
+    expect(releaseArgs?.[2]).toContain("release polish")
     expect(mockPushNyronReleaseTag).not.toHaveBeenCalled()
     expect(mockSetMetaLatestTag).not.toHaveBeenCalled()
   })
